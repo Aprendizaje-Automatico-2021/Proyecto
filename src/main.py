@@ -1,6 +1,5 @@
 from svmPerformance import *
 from initData import *
-import matplotlib.pyplot as plt
 
 def main():
     # Carga de los datos en un diccionario dataset
@@ -10,9 +9,8 @@ def main():
 
     # Clasificacion de los datos mediante SVM
     svmClassification(X, y, Xval, yval, Xtest, ytest)
-    # Clasificacion de los datos mediante Redes Neuronales
-    # Clasificacion de los datos mediante Regresión logistica
-    # Clasificacion de los datos mediante Regresión Lineal
+    # Clasificacion de los datos mediante Redes Neuronales - Clara
+    # Clasificacion de los datos mediante Regresión logistica - Stiven
     
     return 0
     

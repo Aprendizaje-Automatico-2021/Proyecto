@@ -1,5 +1,7 @@
 from sklearn.metrics import accuracy_score
 from sklearn.svm import SVC
+import matplotlib.pyplot as plt
+import numpy as np
 
 def selectParameters(X, y, Xval, yval, initialValue, iter):
     """
@@ -42,7 +44,20 @@ def svmClassification(X, y, Xval, yval, Xtest, ytest):
     yvalp = svm.predict(Xval)
     ytestp = svm.predict(Xtest)
     
-    performance = [ord("A"), ord("B"), ord("C"), ord("D")]
+    realUsers = np.zeros(4)
+    realUsers[0] = np.sum(y == 0)
+    realUsers[1] = np.sum(y == 1)
+    realUsers[2] = np.sum(y == 2)
+    realUsers[3] = np.sum(y == 3)
+
+
+    predictUsers = np.zeros(4)
+    predictUsers[0] = np.sum(yp == 0)
+    predictUsers[1] = np.sum(yp == 1)
+    predictUsers[2] = np.sum(yp == 2)
+    predictUsers[3] = np.sum(yp == 3)
+
+    drawGraphics(realUsers, predictUsers)
 
     # Precision del svm
     print(f"Error: {1 - bestScore}")
@@ -55,3 +70,40 @@ def svmClassification(X, y, Xval, yval, Xtest, ytest):
     testScore = svm.score(Xtest, ytest)
     print(f"Precisión sobres los datos de testing: {testScore * 100}%")
     print("Success")
+
+
+def drawGraphics(realUsers, predictUsers):
+    """
+    Dibuja las gráficas comparativas del ejercicio
+    """
+    plt.figure
+    performance = ["A", "B", "C", "D"]
+
+    # Ejemplo de barras individuales
+    #plt.bar(performance, realUsers)
+    #plt.title('Datos reales')
+    #plt.xlabel('Tipos de grados de entrenamiento')
+    #plt.ylabel('Número de personas por grado')
+    #plt.show()
+    
+    X = np.arange(4)
+    Y1 = realUsers
+    Y2 = predictUsers
+    plt.bar(X, +Y1, facecolor='#9999ff', edgecolor='white')
+    plt.bar(X, -Y2, facecolor='#ff9999', edgecolor='white')
+    
+    i = 0
+    for x, y in zip(X, Y1):
+        plt.text(x, y - 5.0, '%.0f' % y, ha='center', va='top')
+        plt.text(x, 5.0, performance[i], ha='center', va='bottom')
+        i += 1
+
+    for x, y in zip(X, Y2):
+        plt.text(x, -y + 5.0, '%.0f' % y, ha='center', va='bottom')
+
+    plt.xticks([])
+    plt.yticks([])
+    plt.xlabel('Tipos de grados de entrenamiento')
+    plt.ylabel('Número de personas por grado')
+
+    plt.show()

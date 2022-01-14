@@ -14,7 +14,7 @@ def loadData():
     
     # El número de elementos del data set es de 14K * 12, por tanto, 
     # para reducir el tiempo de Debug del programa se va a elegir un grupo reducido
-    rows = int(dataset.shape[0] * 0.1)
+    rows = int(dataset.shape[0] * 0.05)
     cols = int(dataset.shape[1] - 1)
 
     # Carga de atributos en matrices de numpy
@@ -26,7 +26,7 @@ def loadData():
     results = np.zeros(rows)
     test = dataset['Class'].values
     for i in range(rows):
-        results[i] = ord(test[i])
+        results[i] = ord(test[i]) - 65
         
     return features, results
 
