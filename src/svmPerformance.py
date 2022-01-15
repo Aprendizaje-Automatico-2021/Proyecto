@@ -34,30 +34,13 @@ def selectParameters(X, y, Xval, yval, initialValue, iter):
     return bestSvm, bestReg, bestSigma, bestScore
 
 def svmClassification(X, y, Xval, yval, Xtest, ytest):
+    """
+    Clasificación de losd atos mediantes SVM
+    """
     print("Entrenando sistema de clasificacion de bodyPerfomance")
     initialValue = 0.01
     iters = 8
     svm, reg, sigma, bestScore = selectParameters(X, y, Xval, yval, initialValue, iters)
-
-    # Matrices de prediccion de cada conjunto de datos - Aún no se usa, pero puede ser interesante para algo
-    yp = svm.predict(X)
-    yvalp = svm.predict(Xval)
-    ytestp = svm.predict(Xtest)
-    
-    realUsers = np.zeros(4)
-    realUsers[0] = np.sum(y == 0)
-    realUsers[1] = np.sum(y == 1)
-    realUsers[2] = np.sum(y == 2)
-    realUsers[3] = np.sum(y == 3)
-
-
-    predictUsers = np.zeros(4)
-    predictUsers[0] = np.sum(yp == 0)
-    predictUsers[1] = np.sum(yp == 1)
-    predictUsers[2] = np.sum(yp == 2)
-    predictUsers[3] = np.sum(yp == 3)
-
-    drawGraphics(realUsers, predictUsers)
 
     # Precision del svm
     print(f"Error: {1 - bestScore}")
@@ -71,10 +54,44 @@ def svmClassification(X, y, Xval, yval, Xtest, ytest):
     print(f"Precisión sobres los datos de testing: {testScore * 100}%")
     print("Success")
 
+    drawGraphics(X, y, Xval, yval, Xtest, ytest, svm)
+    
 
-def drawGraphics(realUsers, predictUsers):
+#---------------GRAPHICS---------------#
+def calculateUsers(y):
+    initLabel = 1
+    
+    users = np.zeros(4)
+    users[0] = np.sum(y == initLabel)
+    users[1] = np.sum(y == initLabel + 1)
+    users[2] = np.sum(y == initLabel + 2)
+    users[3] = np.sum(y == initLabel + 3)
+
+    return users
+
+def drawGraphics(X, y, Xval, yval, Xtest, ytest, svm):
+    #-------------------------------------------------------------------#
+    # Barras de comparación de los datos de entrenamiento
+    yp = svm.predict(X)
+    realUsers = calculateUsers(y)
+    predictUsers = calculateUsers(yp)
+    drawBarsComparision(realUsers, predictUsers)
+    # Barras de comparación de los datos de validación
+    yvalp = svm.predict(Xval)
+    realUsers = calculateUsers(yval)
+    predictUsers = calculateUsers(yvalp)
+    drawBarsComparision(realUsers, predictUsers)
+    # Barras de comparación de los datos de testing
+    ytestp = svm.predict(Xtest)
+    realUsers = calculateUsers(ytest)
+    predictUsers = calculateUsers(ytestp)
+    drawBarsComparision(realUsers, predictUsers)
+    #-------------------------------------------------------------------#
+
+def drawBarsComparision(realUsers, predictUsers):
     """
-    Dibuja las gráficas comparativas del ejercicio
+    Dibuja las gráficas comparativas en forma de barras entre los datos
+    reales y la predicción
     """
     plt.figure
     performance = ["A", "B", "C", "D"]
@@ -86,7 +103,7 @@ def drawGraphics(realUsers, predictUsers):
     #plt.ylabel('Número de personas por grado')
     #plt.show()
     
-    X = np.arange(4)
+    X = np.arange(len(performance))
     Y1 = realUsers
     Y2 = predictUsers
     plt.bar(X, +Y1, facecolor='#9999ff', edgecolor='white')

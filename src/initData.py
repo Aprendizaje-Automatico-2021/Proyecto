@@ -26,7 +26,7 @@ def loadData():
     results = np.zeros(rows)
     test = dataset['Class'].values
     for i in range(rows):
-        results[i] = ord(test[i]) - 65
+        results[i] = ord(test[i]) - 64
         
     return features, results
 
