@@ -1,6 +1,8 @@
 from svmPerformance import svmClassification as svm
 from logisticRegresion import logisticRegresionClassification as log
+from redesNeuronales import neuralNetworkClassification as red_neu
 from initData import *
+
 
 def main(system=0):
     # Carga de los datos en un diccionario dataset
@@ -16,9 +18,9 @@ def main(system=0):
         log(X, y, Xval, yval, Xtest, ytest)
     elif system == 2:
         # Clasificacion de los datos mediante Redes Neuronales - Clara
-        print("Work in progress...")
+        red_neu(X, y, Xval, yval, Xtest, ytest)
 
     return 0
     
-system = 1
+system = 2
 main(system)
