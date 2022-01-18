@@ -1,6 +1,6 @@
 from svmPerformance import svmClassification as svm
 from logisticRegresion import logisticRegresionClassification as log
-from redesNeuronales import neuralNetworkClassification as red_neu
+from neuralNetwork import neuralNetworkClassification as red_neu
 from initData import *
 
 
