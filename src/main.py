@@ -6,7 +6,7 @@ from initData import *
 
 def main(system=0):
     # Carga de los datos en un diccionario dataset
-    allX, allY = loadData()
+    allX, allY, dataset = loadData()
     # Fragmentación del dataset
     X, y, Xval, yval, Xtest, ytest = selectingData(allX, allY)
 
@@ -15,7 +15,7 @@ def main(system=0):
         svm(X, y, Xval, yval, Xtest, ytest)
     elif system == 1:
         # Clasificacion de los datos mediante Regresión logistica - Stiven
-        log(X, y, Xval, yval, Xtest, ytest)
+        log(X, y, Xval, yval, Xtest, ytest, dataset)
     elif system == 2:
         # Clasificacion de los datos mediante Redes Neuronales - Clara
         red_neu(X, y, Xval, yval, Xtest, ytest)
