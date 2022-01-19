@@ -1,8 +1,9 @@
+from tarfile import DIRTYPE
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_corr(df,size=10):
+def plot_corr(df,size=11):
     """Function plots a graphical correlation matrix for each pair of columns in the dataframe.
 
     Input:
@@ -11,14 +12,19 @@ def plot_corr(df,size=10):
     """
 
     corr = df.corr()
-    plt.matshow(corr, cmap="PuBu")
-    plt.colorbar(label="Correlación entre los atributos")
+    fig, ax = plt.subplots(figsize=(size, size))
+    im = ax.matshow(corr, cmap="RdPu")
+    plt.colorbar(im, label="Correlación entre los atributos")
     plt.xticks(range(len(corr.columns)), corr.columns, rotation=20)
     plt.yticks(range(len(corr.columns)), corr.columns)
+        
+    values = corr.values
+    for (i, j), z in np.ndenumerate(values):
+        ax.text(j, i, '{:0.1f}'.format(z), fontsize=14, ha='center', va='center')
 
     plt.show()
 
-def loadData():
+def loadData(disp_corr=False):
     """
     Lectura del dataset que contiene los datos de enetrenamiento del sistema
     """
@@ -31,19 +37,21 @@ def loadData():
     
     # El número de elementos del data set es de 14K * 12, por tanto, 
     # para reducir el tiempo de Debug del programa se va a elegir un grupo reducido
-    rows = int(dataset.shape[0] * 0.05)
+    rows = int(dataset.shape[0] * 0.1)
     cols = int(dataset.shape[1] - 1)
 
     # Muestra el gráfico de las correlaciones
-    # plot_corr(dataset)
+    if disp_corr:
+        plot_corr(dataset)
 
     # Carga de atributos en matrices de numpy
     features = np.array(dataset.values[:rows, :cols])
-    features[:, 1] = dataset['gender'][:rows] == 'M' # Se consideran hombres = 1, mujeres = 0
-    features = features.astype(float)
+    # Se consideran hombres = 1, mujeres = 0
+    features[:, 1] = (dataset['gender'][:rows] == 'M') * 1
+    features = features.astype(np.double)
 
     # Carga de los resultados de cada ejemplo de entrenamiento
-    results = np.zeros(rows)
+    results = np.zeros(rows)  
     test = dataset['Class'].values
     for i in range(rows):
         results[i] = ord(test[i]) - 64
