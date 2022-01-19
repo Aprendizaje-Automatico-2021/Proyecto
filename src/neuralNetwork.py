@@ -110,7 +110,16 @@ def matrix_forward_propagate(X, thetas1, thetas2):
     Z3 = np.dot(A2, thetas2.T)
     A3 = sigmoide_fun(Z3)
 
-    return A1, A2, A3   
+    return A1, A2, A3 
+
+def show_total_percent(setType, X, y, optT1, optT2, lamb):
+    correct = 0
+    h = matrix_forward_propagate(X, optT1, optT2)[2]
+    # Indices maximos
+    max = np.argmax(h, axis = 1)
+    max[max == 0] = 4
+    correct = np.sum(max == y.ravel())
+    print(f"Lambda {setType}: {lamb}   Porcentaje de acierto: {correct * 100 /np.shape(h)[0]}%")
 
 def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     """
@@ -128,6 +137,7 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     lambdas = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
     weights_size = hidden_layer * (input_layer + 1) + output_layer * (hidden_layer + 1)
     for lamb in lambdas:
+        # Se entrena con las X
         weights = np.random.uniform(-epsilon, epsilon, weights_size)
         y_labels = getLabelMatrixY(y, num_labels)
         result = opt.minimize(fun = backprop, x0 = weights,
@@ -137,14 +147,11 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
         optT1 = np.reshape(result.x[:hidden_layer * (input_layer + 1)], (hidden_layer, (input_layer + 1)))
         optT2 = np.reshape(result.x[hidden_layer * (input_layer + 1):], (num_labels, (hidden_layer + 1)))
 
-        correct = 0
-        h = matrix_forward_propagate(X, optT1, optT2)[2]
-
-        # Indices maximos
-        max = np.argmax(h, axis = 1)
-        max[max == 0] = 4
-        correct = np.sum(max == y.ravel())
-        print(f"Lambda: {lamb}   Porcentaje de acierto: {correct * 100 /np.shape(h)[0]}%")
+        show_total_percent('training', X, y, optT1, optT2, lamb)
+        show_total_percent('validation', Xval, yval, optT1, optT2, lamb)
+        show_total_percent('training', Xtest, ytest, optT1, optT2, lamb)
+        #show_each_percent()
+        print("                       ")
     return 0
 
     

@@ -31,7 +31,7 @@ def loadData():
     
     # El número de elementos del data set es de 14K * 12, por tanto, 
     # para reducir el tiempo de Debug del programa se va a elegir un grupo reducido
-    rows = int(dataset.shape[0] * 0.05 )
+    rows = int(dataset.shape[0] * 0.05)
     cols = int(dataset.shape[1] - 1)
 
     # Muestra el gráfico de las correlaciones
