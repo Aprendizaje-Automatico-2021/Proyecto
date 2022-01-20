@@ -435,3 +435,166 @@ Finalmente, obtenemos que el mejor par de atributos para predecir los resultados
 ![resultados2](https://user-images.githubusercontent.com/47497948/150401478-ffe1bca0-82d8-4325-a3c9-12c0b7b4d2d6.png)
 
 <div style="page-break-after: always;"></div>
+
+# Sistema de Redes Neuronales
+En primer lugar se inicializan los pesos de forma aleatoria (**``Theta1``** y **``Theta2``**). Luego se implementa **``forward propagation``** para obtener la **``hipótesis``**, seguido de la implementación de la **``función de coste``**.  Posteriormente, se implementa **``backpropagation``** para computar las derivadas parciales. Finalmente, se utiliza el **``descenso del gradiente``** para encontrar los mejores parámetros.
+
+La red neuronal está constituida por 3 capas, de manera que en la primera se encuentra la **``capa de entrada``** que tiene tantos nodos como atributos tenga el dataset. Luego nos encontramos con las **``capas oculas``** donde hemos escogido el número de capas ocultas mediante prueba y error hasta encontrar un número que nos satisfaga. Por último, se encuentra la **``capa de salida``** que tiene tantos nodos como tipo de resultados tiene nuestro dataset.
+
+Ahora bien, para entrenar la red neuronal hay que tener en cuenta los siguientes parámetros: **``número de capas oculas``**, **``número de nodos en la capa oculta``**, **``epsilon``**, **``número de iteraciones para el backpropagation``** y **``lambda``**.
+
+Además, se han realizado pruebas con diferentes tamaños en el dataset, escogiendo el **``10%``** del total de los datos y el **``100%``**
+
+También hemos utilizado la función de _checking_ otorgada en la ``práctica 4`` para comprobar que el _backpropagation_ funciona correctamente.
+
+Por otro lado, para realizar un correcto entrenamiento hacemos uso de **``cross-validation``** combinando el mínimo error y el mejor resultado de precisión en cada iteración, de manera que hemos realizado la siguiente fórmula:
+
+```py
+special_cost = Jval[i]/10 + diff/4
+```
+
+La razón de hacer esto es porque no queríamos que la varianza entre los datos de entrenamiento y los datos de validación fuese demasiado grande, pero tampoco queríamos resultados poco precisos, por lo que, de nuevo, mediante prueba y error, conseguimos combinar ambos términos para tener en cuenta la distancia mínima entre cada curva de aprendizaje del error y el mejor resultado de precisión de los datos de validación.
+
+```py
+def make_neural_network(input_layer, hidden_layer, output_layer, X, y_labels, lamb, iteration, epsilon):
+    # Initialize the thetas random values between -eps and eps
+    weights_size = hidden_layer * (input_layer + 1) + output_layer * (hidden_layer + 1)
+    weights = np.random.uniform(-epsilon, epsilon, weights_size)
+
+    # Calculate the best thetas
+    result = opt.minimize(fun = backprop, x0 = weights,
+                    args = (input_layer, hidden_layer, output_layer, X, y_labels, lamb), 
+                    method='TNC', jac=True, options={'maxiter': iteration})
+    # As the result is an array we remake the thetas matrixes with the corespondent sizes
+    optT1 = np.reshape(result.x[:hidden_layer * (input_layer + 1)], (hidden_layer, (input_layer + 1)))
+    optT2 = np.reshape(result.x[hidden_layer * (input_layer + 1):], (output_layer, (hidden_layer + 1)))
+    return optT1, optT2
+
+def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
+    """
+    Clasificación de los datos mediante Redes Neuronales
+    """
+    # We remember the path for the graphics
+    script_dir = os.path.dirname(__file__)
+    result_dir = script_dir[:-4] + '\\memoria\\assets\\neu_net\\'
+
+    # Initialize variables
+    num_features = X.shape[1]
+    num_labels = 4
+    y_labels = getLabelMatrixY(y, num_labels)
+    yval_labels = getLabelMatrixY(yval, num_labels)
+    # Epsilon
+    init_epsilon = 0.1
+    epsilons = 6
+    best_eps = 0.1
+
+    # NeuralNet
+    neural_net_iters = 200 # 100
+    hid = 75    # 25
+    input_layer = num_features
+    output_layer = num_labels
+
+    # Lambdas
+    initLambda = 0.01
+    lambdas = np.zeros(7)
+    best_lambda = 0.01
+    
+    # Misc
+    min_cost = np.inf
+    best_percent = -1
+    best_optT1 = []
+    best_optT2 = []
+    min_diff = np.inf
+    min_special_cost = np.inf
+    # Notas: No hace falta repetir tanto el código, solo con esta cadena de for funciona
+    for j in range(epsilons):
+        epsilon = init_epsilon + 0.02 * j
+        Jval = np.ones(len(lambdas))
+        Jtraining = np.ones(len(lambdas))
+        for i in range(len(lambdas)):
+            # Training with X
+            lambdas[i] = initLambda * 3**i
+            optT1, optT2 = make_neural_network(input_layer, hid, output_layer, X,
+                                        y_labels, lambdas[i], neural_net_iters, epsilon)
+
+            print(f"Lambda {lambdas[i]}   Epsilon: {epsilon} Iterations:"
+                + f"{neural_net_iters} Hidden layers: {hid}")
+
+            # We calculate the percentages of succes and using them we calculate the error for the training data set and cross validation data set
+            Jtraining[i] = 10 - get_total_percent('training', X, y, optT1, optT2)/10
+            current_percent = get_total_percent('validation', Xval, yval, optT1, optT2)
+            Jval[i] = 10 - current_percent/10
+            # Jtraining[i] = J(optT1, optT2, X, y_labels)
+            # Jval[i] = J(optT1, optT2, Xval, yval_labels)
+
+            diff = np.abs(Jtraining[i] - Jval[i])
+            # We remember the thetas that have the smallest error(biggest percent) on the cross validation data set but also the minimum distance 
+            special_cost = Jval[i]/10 + diff/4
+            if  Jval[i] < min_cost:
+                min_cost = Jval[i]
+                min_cost_lamb = lambdas[i]
+                min_cost_eps = epsilon
+            if diff < min_diff:
+                min_diff = diff
+                diff_lamb = lambdas[i]
+                diff_eps = epsilon
+            if  special_cost < min_special_cost: #Combined distance and cost
+                min_special_cost = special_cost
+                best_percent = current_percent
+                best_lambda = lambdas[i]
+                best_eps = epsilon
+                best_optT1 = optT1
+                best_optT2 = optT2
+            print("\n")
+
+        # We prepare the parameters for the graphics
+        name = 'Lambda' + 'LearningCurve' + '_it_' + str(neural_net_iters) + '_hidd_' + str(hid) + '_eps_' + str(round(epsilon,2)) + '_sizex_' + str(X.shape[0])+'.png'
+        path = result_dir + name
+        parameters = 'Hidden layer = ' + str(hid) + ' ' + 'Iterations = ' + str(neural_net_iters) + ' ' + '$\epsilon$ = ' + str(round(epsilon,2))
+        create_learning_curve_graphic(path, parameters, lambdas, Jtraining, Jval, label = "$\lambda$")
+    print()
+    print(fr"Min Diff: {round(min_diff,2)} lamb: {diff_lamb} epsilon: {round(diff_eps,2)}")
+    print(fr"Min Cost {round(min_cost,2)} Max Percent: {10 - round(min_cost,2)} lamb: {min_cost_lamb} epsilon: {min_cost_eps}")
+    print(fr"Mejor lambda: {best_lambda}")
+    print(fr"Mejor epsilon: {round(best_eps,2)}")
+    print(f"Precisión mejor validación: {round(best_percent,2)} best cost: {100 - round(best_percent,2)}")
+    get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
+
+    return 0
+```
+
+## Redes Neuronales resultados
+
+# 10% de los datos
+# 
+**``Valores iniciales. hidden_layers = 25, iters = 100, size_training_set = 803 (10% of the data)``**
+
+Con esta cantidad de datos podemos ver claramente la influencia de lambda en el dataset, por lo que podemos ver cuando hay sesgo y varianza. Cuando el error es alto, la función está desajustada (cuanto mayor sea lambda, mayor será el sesgo, por lo que las líneas comenzarán a juntarse). Por otro lado, cuando los datos de entrenamiento tienen poco error y los de validación tienen mucho, el sistema comienza a sobreajustarse.
+
+Por ello, la mejor gráfica será la que porta una estrella, pues es en la que se muestra como la solución tiene poco error y también los datos están bastante cercanos los unos a los otros.
+
+![iter 100 hid 25 sizeX 803](https://user-images.githubusercontent.com/47497948/150422701-0909a83a-301c-43f0-9ecc-3b278f12cee3.png)
+
+<img src="https://user-images.githubusercontent.com/47497948/150422876-503930bb-5729-41aa-8dd0-955c120cc9ce.PNG">
+
+# 100% de los datos
+A continuación podemos observar diferentes gráficas con diferentes datos, aplicando lo que acabamos de explicar
+#
+
+**``Valores iniciales. hidden_layers = 25, iters = 100``**
+
+![iter 100 hid 25 sizeX 8035 BIG](https://user-images.githubusercontent.com/47497948/150424564-8ab11b3f-404e-4224-990b-86b17eefdec0.png)
+
+<img src="https://user-images.githubusercontent.com/47497948/150424602-524c7ee0-7fe6-44b3-a0ee-0faaf10fb6d3.PNG">
+
+#
+**``Valores iniciales. hidden_layers = 75, iters = 200``**
+
+![iter 200 hid 75 sizeX 8035 BIG](https://user-images.githubusercontent.com/47497948/150424783-5db6a331-dff0-4235-98de-75a0c2749814.png)
+
+
+<img src="https://user-images.githubusercontent.com/47497948/150424850-039d83c1-c9fb-409e-82eb-a004aca89262.PNG">
+
+
+Como podemos observar al ajustar diversos parámetros, en este caso aumentando **``iterations``** y **``hidden_layers``**, hemos ido encontrando poco a poco los mejores resultados para clasificar nuestros datos.
+

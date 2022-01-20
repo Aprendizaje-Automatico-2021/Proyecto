@@ -761,6 +761,142 @@ main(system)
 <p><strong><code>Valores iniciales. initReg = 0.0003, iters=10</code></strong></p>
 <p>Finalmente, obtenemos que el mejor par de atributos para predecir los resultados sería el que está compuesto por <strong><em>sit_bend_forw_cm</em> y <em>sit_ups_counts</em></strong>, que son básicamente dos tipos de ejercicios físicos que se realizan durante el <em>BodyPerformance</em>. Además, lo más curioso a destacar es que la precisión es prácticamente la misma que la obtenida con todos los atributos, por lo que de cara a una mejora en el sistema, sería interesante pensar en cómo utilizar el menor número de atibutos para realizar la predicción.</p>
 <p><img src="https://user-images.githubusercontent.com/47497948/150401478-ffe1bca0-82d8-4325-a3c9-12c0b7b4d2d6.png" alt="resultados2"></p>
+<div style="page-break-after: always;"></div>
+<h1 id="sistema-de-redes-neuronales">Sistema de Redes Neuronales</h1>
+<p>En primer lugar se inicializan los pesos de forma aleatoria (<strong><code>Theta1</code></strong> y <strong><code>Theta2</code></strong>). Luego se implementa <strong><code>forward propagation</code></strong> para obtener la <strong><code>hipótesis</code></strong>, seguido de la implementación de la <strong><code>función de coste</code></strong>.  Posteriormente, se implementa <strong><code>backpropagation</code></strong> para computar las derivadas parciales. Finalmente, se utiliza el <strong><code>descenso del gradiente</code></strong> para encontrar los mejores parámetros.</p>
+<p>La red neuronal está constituida por 3 capas, de manera que en la primera se encuentra la <strong><code>capa de entrada</code></strong> que tiene tantos nodos como atributos tenga el dataset. Luego nos encontramos con las <strong><code>capas oculas</code></strong> donde hemos escogido el número de capas ocultas mediante prueba y error hasta encontrar un número que nos satisfaga. Por último, se encuentra la <strong><code>capa de salida</code></strong> que tiene tantos nodos como tipo de resultados tiene nuestro dataset.</p>
+<p>Ahora bien, para entrenar la red neuronal hay que tener en cuenta los siguientes parámetros: <strong><code>número de capas oculas</code></strong>, <strong><code>número de nodos en la capa oculta</code></strong>, <strong><code>epsilon</code></strong>, <strong><code>número de iteraciones para el backpropagation</code></strong> y <strong><code>lambda</code></strong>.</p>
+<p>Además, se han realizado pruebas con diferentes tamaños en el dataset, escogiendo el <strong><code>10%</code></strong> del total de los datos y el <strong><code>100%</code></strong></p>
+<p>También hemos utilizado la función de <em>checking</em> otorgada en la <code>práctica 4</code> para comprobar que el <em>backpropagation</em> funciona correctamente.</p>
+<p>Por otro lado, para realizar un correcto entrenamiento hacemos uso de <strong><code>cross-validation</code></strong> combinando el mínimo error y el mejor resultado de precisión en cada iteración, de manera que hemos realizado la siguiente fórmula:</p>
+<pre class="hljs"><code><div>special_cost = Jval[i]/<span class="hljs-number">10</span> + diff/<span class="hljs-number">4</span>
+</div></code></pre>
+<p>La razón de hacer esto es porque no queríamos que la varianza entre los datos de entrenamiento y los datos de validación fuese demasiado grande, pero tampoco queríamos resultados poco precisos, por lo que, de nuevo, mediante prueba y error, conseguimos combinar ambos términos para tener en cuenta la distancia mínima entre cada curva de aprendizaje del error y el mejor resultado de precisión de los datos de validación.</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">make_neural_network</span><span class="hljs-params">(input_layer, hidden_layer, output_layer, X, y_labels, lamb, iteration, epsilon)</span>:</span>
+    <span class="hljs-comment"># Initialize the thetas random values between -eps and eps</span>
+    weights_size = hidden_layer * (input_layer + <span class="hljs-number">1</span>) + output_layer * (hidden_layer + <span class="hljs-number">1</span>)
+    weights = np.random.uniform(-epsilon, epsilon, weights_size)
+
+    <span class="hljs-comment"># Calculate the best thetas</span>
+    result = opt.minimize(fun = backprop, x0 = weights,
+                    args = (input_layer, hidden_layer, output_layer, X, y_labels, lamb), 
+                    method=<span class="hljs-string">'TNC'</span>, jac=<span class="hljs-literal">True</span>, options={<span class="hljs-string">'maxiter'</span>: iteration})
+    <span class="hljs-comment"># As the result is an array we remake the thetas matrixes with the corespondent sizes</span>
+    optT1 = np.reshape(result.x[:hidden_layer * (input_layer + <span class="hljs-number">1</span>)], (hidden_layer, (input_layer + <span class="hljs-number">1</span>)))
+    optT2 = np.reshape(result.x[hidden_layer * (input_layer + <span class="hljs-number">1</span>):], (output_layer, (hidden_layer + <span class="hljs-number">1</span>)))
+    <span class="hljs-keyword">return</span> optT1, optT2
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">neuralNetworkClassification</span><span class="hljs-params">(X, y, Xval, yval, Xtest, ytest)</span>:</span>
+    <span class="hljs-string">"""
+    Clasificación de los datos mediante Redes Neuronales
+    """</span>
+    <span class="hljs-comment"># We remember the path for the graphics</span>
+    script_dir = os.path.dirname(__file__)
+    result_dir = script_dir[:<span class="hljs-number">-4</span>] + <span class="hljs-string">'\\memoria\\assets\\neu_net\\'</span>
+
+    <span class="hljs-comment"># Initialize variables</span>
+    num_features = X.shape[<span class="hljs-number">1</span>]
+    num_labels = <span class="hljs-number">4</span>
+    y_labels = getLabelMatrixY(y, num_labels)
+    yval_labels = getLabelMatrixY(yval, num_labels)
+    <span class="hljs-comment"># Epsilon</span>
+    init_epsilon = <span class="hljs-number">0.1</span>
+    epsilons = <span class="hljs-number">6</span>
+    best_eps = <span class="hljs-number">0.1</span>
+
+    <span class="hljs-comment"># NeuralNet</span>
+    neural_net_iters = <span class="hljs-number">200</span> <span class="hljs-comment"># 100</span>
+    hid = <span class="hljs-number">75</span>    <span class="hljs-comment"># 25</span>
+    input_layer = num_features
+    output_layer = num_labels
+
+    <span class="hljs-comment"># Lambdas</span>
+    initLambda = <span class="hljs-number">0.01</span>
+    lambdas = np.zeros(<span class="hljs-number">7</span>)
+    best_lambda = <span class="hljs-number">0.01</span>
+    
+    <span class="hljs-comment"># Misc</span>
+    min_cost = np.inf
+    best_percent = <span class="hljs-number">-1</span>
+    best_optT1 = []
+    best_optT2 = []
+    min_diff = np.inf
+    min_special_cost = np.inf
+    <span class="hljs-comment"># Notas: No hace falta repetir tanto el código, solo con esta cadena de for funciona</span>
+    <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> range(epsilons):
+        epsilon = init_epsilon + <span class="hljs-number">0.02</span> * j
+        Jval = np.ones(len(lambdas))
+        Jtraining = np.ones(len(lambdas))
+        <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(len(lambdas)):
+            <span class="hljs-comment"># Training with X</span>
+            lambdas[i] = initLambda * <span class="hljs-number">3</span>**i
+            optT1, optT2 = make_neural_network(input_layer, hid, output_layer, X,
+                                        y_labels, lambdas[i], neural_net_iters, epsilon)
+
+            print(<span class="hljs-string">f"Lambda <span class="hljs-subst">{lambdas[i]}</span>   Epsilon: <span class="hljs-subst">{epsilon}</span> Iterations:"</span>
+                + <span class="hljs-string">f"<span class="hljs-subst">{neural_net_iters}</span> Hidden layers: <span class="hljs-subst">{hid}</span>"</span>)
+
+            <span class="hljs-comment"># We calculate the percentages of succes and using them we calculate the error for the training data set and cross validation data set</span>
+            Jtraining[i] = <span class="hljs-number">10</span> - get_total_percent(<span class="hljs-string">'training'</span>, X, y, optT1, optT2)/<span class="hljs-number">10</span>
+            current_percent = get_total_percent(<span class="hljs-string">'validation'</span>, Xval, yval, optT1, optT2)
+            Jval[i] = <span class="hljs-number">10</span> - current_percent/<span class="hljs-number">10</span>
+            <span class="hljs-comment"># Jtraining[i] = J(optT1, optT2, X, y_labels)</span>
+            <span class="hljs-comment"># Jval[i] = J(optT1, optT2, Xval, yval_labels)</span>
+
+            diff = np.abs(Jtraining[i] - Jval[i])
+            <span class="hljs-comment"># We remember the thetas that have the smallest error(biggest percent) on the cross validation data set but also the minimum distance </span>
+            special_cost = Jval[i]/<span class="hljs-number">10</span> + diff/<span class="hljs-number">4</span>
+            <span class="hljs-keyword">if</span>  Jval[i] &lt; min_cost:
+                min_cost = Jval[i]
+                min_cost_lamb = lambdas[i]
+                min_cost_eps = epsilon
+            <span class="hljs-keyword">if</span> diff &lt; min_diff:
+                min_diff = diff
+                diff_lamb = lambdas[i]
+                diff_eps = epsilon
+            <span class="hljs-keyword">if</span>  special_cost &lt; min_special_cost: <span class="hljs-comment">#Combined distance and cost</span>
+                min_special_cost = special_cost
+                best_percent = current_percent
+                best_lambda = lambdas[i]
+                best_eps = epsilon
+                best_optT1 = optT1
+                best_optT2 = optT2
+            print(<span class="hljs-string">"\n"</span>)
+
+        <span class="hljs-comment"># We prepare the parameters for the graphics</span>
+        name = <span class="hljs-string">'Lambda'</span> + <span class="hljs-string">'LearningCurve'</span> + <span class="hljs-string">'_it_'</span> + str(neural_net_iters) + <span class="hljs-string">'_hidd_'</span> + str(hid) + <span class="hljs-string">'_eps_'</span> + str(round(epsilon,<span class="hljs-number">2</span>)) + <span class="hljs-string">'_sizex_'</span> + str(X.shape[<span class="hljs-number">0</span>])+<span class="hljs-string">'.png'</span>
+        path = result_dir + name
+        parameters = <span class="hljs-string">'Hidden layer = '</span> + str(hid) + <span class="hljs-string">' '</span> + <span class="hljs-string">'Iterations = '</span> + str(neural_net_iters) + <span class="hljs-string">' '</span> + <span class="hljs-string">'$\epsilon$ = '</span> + str(round(epsilon,<span class="hljs-number">2</span>))
+        create_learning_curve_graphic(path, parameters, lambdas, Jtraining, Jval, label = <span class="hljs-string">"$\lambda$"</span>)
+    print()
+    print(<span class="hljs-string">fr"Min Diff: <span class="hljs-subst">{round(min_diff,<span class="hljs-number">2</span>)}</span> lamb: <span class="hljs-subst">{diff_lamb}</span> epsilon: <span class="hljs-subst">{round(diff_eps,<span class="hljs-number">2</span>)}</span>"</span>)
+    print(<span class="hljs-string">fr"Min Cost <span class="hljs-subst">{round(min_cost,<span class="hljs-number">2</span>)}</span> Max Percent: <span class="hljs-subst">{<span class="hljs-number">10</span> - round(min_cost,<span class="hljs-number">2</span>)}</span> lamb: <span class="hljs-subst">{min_cost_lamb}</span> epsilon: <span class="hljs-subst">{min_cost_eps}</span>"</span>)
+    print(<span class="hljs-string">fr"Mejor lambda: <span class="hljs-subst">{best_lambda}</span>"</span>)
+    print(<span class="hljs-string">fr"Mejor epsilon: <span class="hljs-subst">{round(best_eps,<span class="hljs-number">2</span>)}</span>"</span>)
+    print(<span class="hljs-string">f"Precisión mejor validación: <span class="hljs-subst">{round(best_percent,<span class="hljs-number">2</span>)}</span> best cost: <span class="hljs-subst">{<span class="hljs-number">100</span> - round(best_percent,<span class="hljs-number">2</span>)}</span>"</span>)
+    get_total_percent(<span class="hljs-string">'Current best test'</span>, Xtest, ytest, best_optT1, best_optT2)
+
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>
+</div></code></pre>
+<h2 id="redes-neuronales-resultados">Redes Neuronales resultados</h2>
+<h1 id="10-de-los-datos">10% de los datos</h1>
+<h1 id=""></h1>
+<p><strong><code>Valores iniciales. hidden_layers = 25, iters = 100, size_training_set = 803 (10% of the data)</code></strong></p>
+<p>Con esta cantidad de datos podemos ver claramente la influencia de lambda en el dataset, por lo que podemos ver cuando hay sesgo y varianza. Cuando el error es alto, la función está desajustada (cuanto mayor sea lambda, mayor será el sesgo, por lo que las líneas comenzarán a juntarse). Por otro lado, cuando los datos de entrenamiento tienen poco error y los de validación tienen mucho, el sistema comienza a sobreajustarse.</p>
+<p>Por ello, la mejor gráfica será la que porta una estrella, pues es en la que se muestra como la solución tiene poco error y también los datos están bastante cercanos los unos a los otros.</p>
+<p><img src="https://user-images.githubusercontent.com/47497948/150422701-0909a83a-301c-43f0-9ecc-3b278f12cee3.png" alt="iter 100 hid 25 sizeX 803"></p>
+<img src="https://user-images.githubusercontent.com/47497948/150422876-503930bb-5729-41aa-8dd0-955c120cc9ce.PNG">
+<h1 id="100-de-los-datos">100% de los datos</h1>
+<p>A continuación podemos observar diferentes gráficas con diferentes datos, aplicando lo que acabamos de explicar</p>
+<h1 id=""></h1>
+<p><strong><code>Valores iniciales. hidden_layers = 25, iters = 100</code></strong></p>
+<p><img src="https://user-images.githubusercontent.com/47497948/150424564-8ab11b3f-404e-4224-990b-86b17eefdec0.png" alt="iter 100 hid 25 sizeX 8035 BIG"></p>
+<img src="https://user-images.githubusercontent.com/47497948/150424602-524c7ee0-7fe6-44b3-a0ee-0faaf10fb6d3.PNG">
+<h1 id=""></h1>
+<p><strong><code>Valores iniciales. hidden_layers = 75, iters = 200</code></strong></p>
+<p><img src="https://user-images.githubusercontent.com/47497948/150424783-5db6a331-dff0-4235-98de-75a0c2749814.png" alt="iter 200 hid 75 sizeX 8035 BIG"></p>
+<img src="https://user-images.githubusercontent.com/47497948/150424850-039d83c1-c9fb-409e-82eb-a004aca89262.PNG">
+<p>Como podemos observar al ajustar diversos parámetros, en este caso aumentando <strong><code>iterations</code></strong> y <strong><code>hidden_layers</code></strong>, hemos ido encontrando poco a poco los mejores resultados para clasificar nuestros datos.</p>
 
 </body>
 </html>
