@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>memoria.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="bodyperfomance-classification">BodyPerfomance Classification</h1>
+<table>
+<thead>
+<tr>
+<th>Autores</th>
+<th>email</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clara Daniela Sima</td>
+<td>csima@ucm.es</td>
+</tr>
+<tr>
+<td>Stiven Arias Giraldo</td>
+<td>starias@ucm.es</td>
+</tr>
+</tbody>
+</table>
+<p>Resultados del proyecto final de la asignatura de <strong><code>Aprendizaje Automático y Minería de Datos</code></strong> del grado de <strong><code>Desarrollo de Videojuegos</code></strong> de la <strong><code>Universidad Complutense de Madrid</code></strong></p>
+<h1 id="descripci%C3%B3n">Descripción</h1>
+<p>La base de datos que hemos escogido está compuesta por múltiples atributos que describen características físicas de diversas personas. Por ser más concretos, contamos con <code>13393 ejemplos de entrenamiento</code>, es decir, 13393 personas, de las cuales tenemos <code>11 atributos</code> y un resultado para cada una.</p>
+<p>Esto quiere decir que nuestro dataset está compuesto por una <code>matriz de (13393, 12) dimensiones</code>, donde la última columna nos indica la calificación de un <em><code>entrenamiento físico</code></em> de cada persona en función del resto de atributos, pudiendo ser <strong><code>A, B, C, D</code></strong> dicha calificación, siendo <strong>A</strong> el mejor resultado posible.</p>
+<p><img src="https://user-images.githubusercontent.com/47497948/149372136-b6356d03-dd10-4deb-a039-9ddb2182d937.png" alt="image"></p>
+<p><img src="https://user-images.githubusercontent.com/47497948/149371625-e32eefcb-1069-4653-bc3d-71cfeb01bf75.png" alt="image"></p>
+<p>Así pues, la idea principal de este proyecto es aprovechar los diferentes algoritmos de aprendizaje automático realizados durante el curso, procesando los diferentes datos para poder determinar qué sistema de aprendizaje resulta más óptimo para clasificar correctamente el <em>dataset</em>.
+Cada uno de los sistemas tendrán que predecir cuál ha sido el grado de eficiencia del usuario (A, B, C o D) para finalmente comparar dicha predicción con los datos reales.</p>
+<p>Los sistemas son los siguientes: <em>SVM, Regresión logística y Redes Neuronales</em></p>
+<h1 id="inicializaci%C3%B3n-y-selecci%C3%B3n-de-los-datos-de-entrenamiento">Inicialización y selección de los datos de entrenamiento</h1>
+<p>Dentro del <strong>main.py</strong> tenemos el lanzador del programa, donde importamos los diferentes métodos de los sistemas de clasificación.</p>
+<p>Para agilizar el proceso de selección del sistema tenemos una variable <strong><em>system</em></strong> para seleccionar el sistema que se desea probar:</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">from</span> svmPerformance <span class="hljs-keyword">import</span> svmClassification <span class="hljs-keyword">as</span> svm
+<span class="hljs-keyword">from</span> logisticRegresion <span class="hljs-keyword">import</span> bestPairClassification <span class="hljs-keyword">as</span> pairLog, logisticRegresionClassification <span class="hljs-keyword">as</span> log
+<span class="hljs-keyword">from</span> redesNeuronales <span class="hljs-keyword">import</span> neuralNetworkClassification <span class="hljs-keyword">as</span> red_neu
+<span class="hljs-keyword">from</span> initData <span class="hljs-keyword">import</span> *
+
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">main</span><span class="hljs-params">(system=<span class="hljs-number">0</span>)</span>:</span>
+    <span class="hljs-comment"># Carga de los datos en un diccionario dataset</span>
+    allX, allY, dataset = loadData()
+    <span class="hljs-comment"># Fragmentación del dataset</span>
+    X, y, Xval, yval, Xtest, ytest = selectingData(allX, allY)
+
+    <span class="hljs-keyword">if</span> system == <span class="hljs-number">0</span>:
+        <span class="hljs-comment"># Clasificacion de los datos mediante SVM</span>
+        svm(X, y, Xval, yval, Xtest, ytest)
+    <span class="hljs-keyword">elif</span> system == <span class="hljs-number">1</span>:
+        <span class="hljs-comment"># Clasificacion de los datos mediante Regresión logistica</span>
+        log(X, y, Xval, yval, Xtest, ytest)
+        <span class="hljs-comment"># Clasificacion de los datos mediante Regresión logistica</span>
+        <span class="hljs-comment"># escogiendo el mejor par de atributos</span>
+        pairLog(X, y, Xval, yval, Xtest, ytest, dataset)
+    <span class="hljs-keyword">elif</span> system == <span class="hljs-number">2</span>:
+        <span class="hljs-comment"># Clasificacion de los datos mediante Redes Neuronales</span>
+        red_neu(X, y, Xval, yval, Xtest, ytest)
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>
+    
+system = <span class="hljs-number">1</span>
+main(system)
+</div></code></pre>
+<p>En primer lugar, se cargan los datos con <strong><code>loadData</code></strong>, donde se lee el <strong>.csv</strong> y se hacen las correspondientes conversiones de datos para obtener matrices de <strong>floats</strong>. Además, tenemos el método <strong><code>plot_coor</code></strong>, el cual nos sirve para dibujar una gráfica que muestra la matriz de correlaciones entre cada par de datos (exceptuando <code>gender</code> y <code>Class</code>, ya que es lo que devuelve <strong><code>df.corr()</code></strong>, además que nuestro sistema va a clasificar los valores en función de Class). Esta matriz de correlaciones nos parece interesante porque con ella se pueden tener otro tipo de observaciones, sin embargo, no es del todo relevante para nuestro sistema de clasificación.</p>
+<pre class="hljs"><code><div><span class="hljs-keyword">from</span> tarfile <span class="hljs-keyword">import</span> DIRTYPE
+<span class="hljs-keyword">import</span> pandas <span class="hljs-keyword">as</span> pd
+<span class="hljs-keyword">import</span> numpy <span class="hljs-keyword">as</span> np
+<span class="hljs-keyword">import</span> matplotlib.pyplot <span class="hljs-keyword">as</span> plt
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">plot_corr</span><span class="hljs-params">(df,size=<span class="hljs-number">10</span>)</span>:</span>
+    <span class="hljs-string">"""
+    Dibuja una matriz de correlaciones por filas y columnas
+    para cada par de datos del dataset
+    """</span>
+
+    corr = df.corr()
+    fig, ax = plt.subplots(figsize=(size, size))
+    im = ax.matshow(corr, cmap=<span class="hljs-string">"RdPu"</span>)
+    plt.colorbar(im, label=<span class="hljs-string">"Correlación entre los atributos"</span>)
+    plt.xticks(range(len(corr.columns)), corr.columns, rotation=<span class="hljs-number">20</span>)
+    plt.yticks(range(len(corr.columns)), corr.columns)
+        
+    values = corr.values
+    <span class="hljs-keyword">for</span> (i, j), z <span class="hljs-keyword">in</span> np.ndenumerate(values):
+        ax.text(j, i, <span class="hljs-string">'{:0.1f}'</span>.format(z), fontsize=<span class="hljs-number">14</span>, ha=<span class="hljs-string">'center'</span>, va=<span class="hljs-string">'center'</span>)
+
+    plt.show()
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">loadData</span><span class="hljs-params">(disp_corr=False)</span>:</span>
+    <span class="hljs-string">"""
+    Lectura del dataset que contiene los datos de enetrenamiento del sistema
+    """</span>
+    <span class="hljs-comment"># Carga de los datos del csv y conversión a diccionario sencillo de atributos</span>
+    dataset = pd.read_csv(<span class="hljs-string">"./src/assets/bodyPerformance.csv"</span>)
+    dataset.drop_duplicates(inplace=<span class="hljs-literal">True</span>)
+    dataset.columns = dataset.columns.str.strip().str.replace(<span class="hljs-string">' '</span>, <span class="hljs-string">'_'</span>)
+    dataset.rename(columns={<span class="hljs-string">'class'</span>:<span class="hljs-string">'Class'</span>, <span class="hljs-string">'body_fat_%'</span>:<span class="hljs-string">'body_fat'</span>, 
+    <span class="hljs-string">'sit-ups_counts'</span>:<span class="hljs-string">'sit_ups_counts'</span>, <span class="hljs-string">'sit_and_bend_forward_cm'</span>:<span class="hljs-string">'sit_bend_forw_cm'</span>}, inplace=<span class="hljs-literal">True</span>)
+    
+    <span class="hljs-comment"># El número de elementos del data set es de 14K * 12, por tanto, </span>
+    <span class="hljs-comment"># para reducir el tiempo de Debug del programa se va a elegir un grupo reducido</span>
+    rows = int(dataset.shape[<span class="hljs-number">0</span>])
+    cols = int(dataset.shape[<span class="hljs-number">1</span>] - <span class="hljs-number">1</span>)
+
+    <span class="hljs-comment"># Muestra el gráfico de las correlaciones</span>
+    plot_corr(dataset)
+
+    <span class="hljs-comment"># Carga de atributos en matrices de numpy</span>
+    features = np.array(dataset.values[:rows, :cols])
+    <span class="hljs-comment"># Se consideran hombres = 1, mujeres = 0</span>
+    features[:, <span class="hljs-number">1</span>] = (dataset[<span class="hljs-string">'gender'</span>][:rows] == <span class="hljs-string">'M'</span>) * <span class="hljs-number">1</span>
+    features = features.astype(np.double)
+
+    <span class="hljs-comment"># Carga de los resultados de cada ejemplo de entrenamiento</span>
+    results = np.zeros(rows)  
+    test = dataset[<span class="hljs-string">'Class'</span>].values
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(rows):
+        results[i] = ord(test[i]) - <span class="hljs-number">64</span>
+        
+    <span class="hljs-keyword">return</span> features, results, dataset
+</div></code></pre>
+<p>Hemos separado los datos en 3 grupos: <code>entrenamiento</code>, <code>validación</code> y <code>testing</code> donde la proporción de cada grupo es <code>60%</code>, <code>20%</code> y <code>20%</code> del número total de datos respectivamente.</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">selectingData</span><span class="hljs-params">(allX, allY)</span>:</span>
+    <span class="hljs-string">"""
+    Seleccion de los datos de entrenamiento, 
+    de validación y de pruebas
+    """</span>
+    <span class="hljs-comment"># Se cogerá un 60% de los datos para entrenar</span>
+    X = normalizeMatrix(allX[:int(<span class="hljs-number">0.6</span> * np.shape(allX)[<span class="hljs-number">0</span>])])
+    y = allY[:int(<span class="hljs-number">0.6</span> * np.shape(allY)[<span class="hljs-number">0</span>])]
+
+    <span class="hljs-comment"># Después se coge un 20% para evaluar</span>
+    Xval = normalizeMatrix(allX[int(<span class="hljs-number">0.6</span> * np.shape(allX)[<span class="hljs-number">0</span>]) : int(<span class="hljs-number">0.8</span> * np.shape(allX)[<span class="hljs-number">0</span>])])
+    yval = allY[int(<span class="hljs-number">0.6</span> * np.shape(allY)[<span class="hljs-number">0</span>]) : int(<span class="hljs-number">0.8</span> * np.shape(allX)[<span class="hljs-number">0</span>])]
+
+    <span class="hljs-comment"># Por último, el 20% resrtante para testing</span>
+    Xtest = normalizeMatrix(allX[int(<span class="hljs-number">0.8</span> * np.shape(allX)[<span class="hljs-number">0</span>]):])
+    ytest = allY[int(<span class="hljs-number">0.8</span> * np.shape(allX)[<span class="hljs-number">0</span>]):]
+
+    <span class="hljs-keyword">return</span> X, y, Xval, yval, Xtest, ytest
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">normalizeMatrix</span><span class="hljs-params">(X)</span>:</span>
+    <span class="hljs-string">"""
+    Normaliza el array X
+    xi = (xi - ui) / si
+    """</span>
+    matriz_normal = np.empty_like(X)
+
+    <span class="hljs-comment"># La media y la varianza de cada columna</span>
+    u = np.mean(X, axis=<span class="hljs-number">0</span>)
+    s = np.std(X, axis=<span class="hljs-number">0</span>)
+
+    matriz_normal = (X - u) / s
+    <span class="hljs-keyword">return</span> matriz_normal
+</div></code></pre>
+<p>En los valores <strong><em>X</em></strong> guardamos los atributos de cada ejemplo de entrenamiento y en los valores <strong><em>Y</em></strong>, los resultados.</p>
+<p>La idea de esta distinción de valores es utilizar los <strong><code>datos de entrenamiento</code></strong> para entrenar el sistema utilizado. A partir de los valores generados por el sistema, se utilizarán los <strong><code>datos de validación</code></strong> para verificar que los valores obtenidos son realmente óptimos y, finalmente, con los <strong><code>datos de testing</code></strong> se pone a prueba el sistema al completo.</p>
+<h1 id="sistema-svm">Sistema SVM</h1>
+<p>En primer lugar, realizamos la clasificación de los datos mediante <strong>SVM</strong> (Support Vector Machine).</p>
+<p>Para realizar el entrenamiento con SVM hay que tener en cuenta 2 parámetros: <strong><code>initialValue</code></strong>, <strong><code>iters</code></strong>.</p>
+<ul>
+<li>
+<p><strong>initialValue</strong>: sirve para inicializar tanto el parámetro de regularización <code>C</code> y el parámetro <code>sigma</code>. Ambos valores serán usados en la función <strong>SVC</strong>, la cual está basada en un kernel gaussiano <code>rbf</code> y se irán modificando a través del bucle de entrenamiento.</p>
+</li>
+<li>
+<p><strong>iters</strong>: es el número de iteraciones que habrá para realizar el entrenamiento de los valores <code>C</code> y <code>sigma</code>, es decir, en total habrá <strong><code>iters * iters</code></strong> iteraciones para el entrenamiento.</p>
+</li>
+</ul>
+<p>Durante este proceso, vamos guardando los mejores valores del entrenamiento en función de la puntuación obtenida con los datos de validación <code>Xval, yval</code>.</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">svmClassification</span><span class="hljs-params">(X, y, Xval, yval, Xtest, ytest)</span>:</span>
+    <span class="hljs-string">"""
+    Clasificación de losd atos mediantes SVM
+    """</span>
+    print(<span class="hljs-string">"Entrenando sistema de clasificacion de bodyPerfomance"</span>)
+    initialValue = <span class="hljs-number">0.0001</span>
+    iters = <span class="hljs-number">20</span>
+    XX = np.insert(X, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>, axis = <span class="hljs-number">1</span>)
+    XXval = np.insert(Xval, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>, axis = <span class="hljs-number">1</span>)
+    XXtest = np.insert(Xtest, <span class="hljs-number">0</span>, <span class="hljs-number">1</span>, axis = <span class="hljs-number">1</span>)
+
+    svm, params, bestIndex, bestScore, eTraining, eValidation = selectParameters(XX, y, XXval, yval, initialValue, iters)
+
+    reg = params[<span class="hljs-number">0</span>, bestIndex[<span class="hljs-number">0</span>]]
+    sigma = params[<span class="hljs-number">1</span>, bestIndex[<span class="hljs-number">1</span>]]
+
+    <span class="hljs-comment"># Precision del svm</span>
+    print(<span class="hljs-string">f"Error: <span class="hljs-subst">{<span class="hljs-number">1</span> - bestScore}</span>"</span>)
+    print(<span class="hljs-string">f"Mejor reg: <span class="hljs-subst">{reg}</span>"</span>)
+    print(<span class="hljs-string">f"Mejor sigma: <span class="hljs-subst">{sigma}</span>"</span>)
+    testScore = np.zeros(<span class="hljs-number">3</span>)
+    testScore[<span class="hljs-number">0</span>] = svm.score(XX, y)
+    print(<span class="hljs-string">f"Precisión sobres los datos de entrenamiento: <span class="hljs-subst">{testScore[<span class="hljs-number">0</span>] * <span class="hljs-number">100</span>}</span>%"</span>)
+    testScore[<span class="hljs-number">1</span>] = svm.score(XXval, yval)
+    print(<span class="hljs-string">f"Precisión sobres los datos de evaluación: <span class="hljs-subst">{testScore[<span class="hljs-number">1</span>] * <span class="hljs-number">100</span>}</span>%"</span>)
+    testScore[<span class="hljs-number">2</span>] = svm.score(XXtest, ytest)
+    print(<span class="hljs-string">f"Precisión sobres los datos de testing: <span class="hljs-subst">{testScore[<span class="hljs-number">2</span>] * <span class="hljs-number">100</span>}</span>%"</span>)
+    print(<span class="hljs-string">f"Precisión media: <span class="hljs-subst">{testScore.mean() * <span class="hljs-number">100</span>}</span>%"</span>)
+    print(<span class="hljs-string">"Success"</span>)
+
+    drawGraphics(XX, y, XXval, yval, XXtest, ytest, svm, params, eTraining, eValidation, bestIndex)
+</div></code></pre>
+<p>Finalmente, no solo utilizamos <code>Xtest, ytest</code> para realizar la comprobación de resultados, aunque sus datos serían los más relevantes, sino que comprobamos la puntuación de cada grupo de datos, imprimiendo los cálculos en consola y mostrándolos mediante gráficas.</p>
+<div style="page-break-after: always;"></div>
+<h2 id="svm-resultados">SVM Resultados</h2>
+<p>Para observar los resultados de nuestro sistema de clasificación, hemos utilizado diversas pruebas, por lo que vamos a mostrar los resultados finales y más relevantes. Además, hemos cogido todos los ejemplos de entrenamiento del dataset porque era lo que mejor resultado nos daba en este caso, es decir, casi 14000 ejemplos de entrenamiento.</p>
+<p><strong><code>Valores iniciales. sigma = 0.01, C = 0.01, iteraciones = 20</code></strong></p>
+<h3 id="evoluci%C3%B3n-de-sigma">Evolución de Sigma</h3>
+<h1 id=""></h1>
+<p>En esta imagen podemos observar la evolución del parámetro <code>sigma</code> en función de <code>C</code>. A pesar de haber estado entrenando con 20 valores distintos para C y sigma, es decir, con 20 iteraciones para cada uno, resultaban gráficas que no mostraban ningún tipo de evolución pues el valor de los parámetros en ese instante no tenía ningún impacto. Así pues, mediante estas gráficas podemos observar como crece la precisión media de las predicciones, tanto para los datos de entrenamiento como los de validación, a medida que aumenta C, es decir, tal vez con mayores iteraciones y mayores valores de C podríamos obtener valores más precisos.</p>
+<center>
+<img src = "https://user-images.githubusercontent.com/47497948/150387765-342e1e33-d009-4881-90a0-9c114667312a.png" height = 500>
+</center>
+<div style="page-break-after: always;"></div>
+<h3 id="evoluci%C3%B3n-de-c">Evolución de C</h3>
+<h1 id=""></h1>
+<p>Ahora bien, con estas gráficas observamos el efecto contrario, la evolución de <code>C</code> en función de <code>sigma</code>. En este caso, obtenemos menos gráficas relevantes pueso que los valores altos de sigma no otorgaban ningún tipo de impacto ni de beneficio al sistema de clasificación.</p>
+<p><img src="https://user-images.githubusercontent.com/47497948/150390920-02d2b162-ad46-4f24-9355-9ce7dda7d086.png" alt="GraficasSVM-S"></p>
+<h3 id="resultados">Resultados</h3>
+<h1 id=""></h1>
+<p>Como podemos observar, los mejores valores son: <code>C (reg) = 116226.</code> y <code>sigma = 17.7</code> otorgando las precisiones que se pueden observar en la imagen, calculadas mediante <code>svm.score</code>.</p>
+<p><img src="https://user-images.githubusercontent.com/47497948/150391352-e0ad6fa6-e4b7-4a78-a0c5-f203127379a8.png" alt="resultados"></p>
+<div style="page-break-after: always;"></div>
+<h3 id="predicciones">Predicciones</h3>
+<h1 id=""></h1>
+<p>Finalmente, pusimos a prueba el sistema utilizando los mejores valores, obteniendo una gráfica de barras como la que se puede observar. En ella estamos comparando los valores reales con las predicciones, indicando el número de personas que hay por grado, a qué grado pertenecen y el porcentaje de precisión de esa columna.</p>
+<p><img src="https://user-images.githubusercontent.com/47497948/150392097-0abeb671-ae8f-4669-8973-ad4dc32a4045.png" alt="BarsSVM"></p>
+<div style="page-break-after: always;"></div>
+<h1 id="sistema-de-regresi%C3%B3n-log%C3%ADstica">Sistema de Regresión Logística</h1>
+
+</body>
+</html>

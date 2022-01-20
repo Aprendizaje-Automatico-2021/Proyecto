@@ -229,37 +229,3 @@ def bestPairClassification(X, y, Xval, yval, Xtest, ytest, dataset):
     print("\n------------------------------------------")
 
     return 0
-#---------------GRAPHICS---------------#
-def drawPerformanceGraph(X, Y):
-    """
-    Dibuja los datos en función del grado de Perfomance 
-    que se quiera predecir
-    """
-    plt.figure()
-    # Results of admitted
-    pos = np.where (Y == 1)
-    # Result of not admitted
-    neg = np.where (Y == 0)
-
-    plt.scatter(X[pos, 0], X[pos, 1], marker='+', c='k', label="y = 1")
-    plt.scatter(X[neg, 0], X[neg, 1], c='#c6ce00', label="y = 0")
-    plt.legend(loc='lower left')
-    plt.show()
-
-def lineal_fun_graph(X, Theta, poly, limit=0.8):
-
-    x1_min, x1_max = X[:, 0].min(), X[:, 0].max()
-    x2_min, x2_max = X[:, 1].min(), X[:, 1].max()
-
-    xx1, xx2 = np.meshgrid(np.linspace(x1_min, x1_max),
-                            np.linspace(x2_min, x2_max))
-
-    poly = poly.fit_transform(np.c_[xx1.ravel(),
-                        xx2.ravel()])
-    h = sigmoide_fun(np.dot(poly, Theta))
-
-    h = h.reshape(xx1.shape)
-
-    plt.contour(xx1, xx2, h, [limit], linewidths=1, colors='b')
-
-    return 0

@@ -205,4 +205,47 @@ def svmClassification(X, y, Xval, yval, Xtest, ytest):
 
 Finalmente, no solo utilizamos ``Xtest, ytest`` para realizar la comprobación de resultados, aunque sus datos serían los más relevantes, sino que comprobamos la puntuación de cada grupo de datos, imprimiendo los cálculos en consola y mostrándolos mediante gráficas.
 
+<div style="page-break-after: always;"></div>
+
 ## SVM Resultados
+Para observar los resultados de nuestro sistema de clasificación, hemos utilizado diversas pruebas, por lo que vamos a mostrar los resultados finales y más relevantes. Además, hemos cogido todos los ejemplos de entrenamiento del dataset porque era lo que mejor resultado nos daba en este caso, es decir, casi 14000 ejemplos de entrenamiento.
+
+**``Valores iniciales. sigma = 0.01, C = 0.01, iteraciones = 20``**
+
+### Evolución de Sigma
+#
+En esta imagen podemos observar la evolución del parámetro ``sigma`` en función de ``C``. A pesar de haber estado entrenando con 20 valores distintos para C y sigma, es decir, con 20 iteraciones para cada uno, resultaban gráficas que no mostraban ningún tipo de evolución pues el valor de los parámetros en ese instante no tenía ningún impacto. Así pues, mediante estas gráficas podemos observar como crece la precisión media de las predicciones, tanto para los datos de entrenamiento como los de validación, a medida que aumenta C, es decir, tal vez con mayores iteraciones y mayores valores de C podríamos obtener valores más precisos.
+
+<center>
+<img src = "https://user-images.githubusercontent.com/47497948/150387765-342e1e33-d009-4881-90a0-9c114667312a.png" height = 500>
+</center>
+
+<div style="page-break-after: always;"></div>
+
+### Evolución de C
+#
+
+Ahora bien, con estas gráficas observamos el efecto contrario, la evolución de ``C`` en función de ``sigma``. En este caso, obtenemos menos gráficas relevantes pueso que los valores altos de sigma no otorgaban ningún tipo de impacto ni de beneficio al sistema de clasificación.
+
+![GraficasSVM-S](https://user-images.githubusercontent.com/47497948/150390920-02d2b162-ad46-4f24-9355-9ce7dda7d086.png)
+
+### Resultados
+#
+
+Como podemos observar, los mejores valores son: ``C (reg) = 116226.`` y ``sigma = 17.7`` otorgando las precisiones que se pueden observar en la imagen, calculadas mediante ``svm.score``.
+
+![resultados](https://user-images.githubusercontent.com/47497948/150391352-e0ad6fa6-e4b7-4a78-a0c5-f203127379a8.png)
+
+<div style="page-break-after: always;"></div>
+
+### Predicciones
+#
+
+Finalmente, pusimos a prueba el sistema utilizando los mejores valores, obteniendo una gráfica de barras como la que se puede observar. En ella estamos comparando los valores reales con las predicciones, indicando el número de personas que hay por grado, a qué grado pertenecen y el porcentaje de precisión de esa columna.
+
+![BarsSVM](https://user-images.githubusercontent.com/47497948/150392097-0abeb671-ae8f-4669-8973-ad4dc32a4045.png)
+
+<div style="page-break-after: always;"></div>
+
+# Sistema de Regresión Logística
+Para entrenar los datos mediante ``Regresión Logística`` hacemos uso de **``oneVsAll``**
