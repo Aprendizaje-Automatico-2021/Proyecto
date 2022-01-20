@@ -135,8 +135,8 @@ def create_learning_curve_graphic(path, parameters, lambdas, Jtraining, Jval, la
     plt.tight_layout(rect=[1,1,1,1])
     plt.xlabel(label)
     plt.ylabel('Cost') 
-    plt.savefig(path)   
-    #plt.show()
+    #plt.savefig(path)   
+    plt.show()
     plt.close()
 
 def make_neural_network(input_layer, hidden_layer, output_layer, X, y_labels, lamb, iteration, epsilon):
@@ -159,13 +159,12 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     """
     # We remember the path for the graphics
     script_dir = os.path.dirname(__file__)
-    result_dir = script_dir[:-4] + '\\memoria\\assets\\neu_net\\'
+    result_dir = script_dir[:-4] + '\\memoria\\assets\\neural_net\\'
 
     # Initialize variables
     num_features = X.shape[1]
     num_labels = 4
     y_labels = getLabelMatrixY(y, num_labels)
-    yval_labels = getLabelMatrixY(yval, num_labels)
     # Epsilon
     init_epsilon = 0.1
     epsilons = 6
@@ -183,11 +182,8 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     best_lambda = 0.01
     
     # Misc
-    min_cost = np.inf
     best_percent = -1
     best_optT1 = []
-    best_optT2 = []
-    min_diff = np.inf
     min_special_cost = np.inf
     # Notas: No hace falta repetir tanto el código, solo con esta cadena de for funciona
     for j in range(epsilons):
@@ -207,20 +203,10 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
             Jtraining[i] = 10 - get_total_percent('training', X, y, optT1, optT2)/10
             current_percent = get_total_percent('validation', Xval, yval, optT1, optT2)
             Jval[i] = 10 - current_percent/10
-            # Jtraining[i] = J(optT1, optT2, X, y_labels)
-            # Jval[i] = J(optT1, optT2, Xval, yval_labels)
-
             diff = np.abs(Jtraining[i] - Jval[i])
+
             # We remember the thetas that have the smallest error(biggest percent) on the cross validation data set but also the minimum distance 
             special_cost = Jval[i]/10 + diff/4
-            if  Jval[i] < min_cost:
-                min_cost = Jval[i]
-                min_cost_lamb = lambdas[i]
-                min_cost_eps = epsilon
-            if diff < min_diff:
-                min_diff = diff
-                diff_lamb = lambdas[i]
-                diff_eps = epsilon
             if  special_cost < min_special_cost: #Combined distance and cost
                 min_special_cost = special_cost
                 best_percent = current_percent
@@ -229,15 +215,13 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
                 best_optT1 = optT1
                 best_optT2 = optT2
             print("\n")
-
+        print(lambdas)
         # We prepare the parameters for the graphics
         name = 'Lambda' + 'LearningCurve' + '_it_' + str(neural_net_iters) + '_hidd_' + str(hid) + '_eps_' + str(round(epsilon,2)) + '_sizex_' + str(X.shape[0])+'.png'
         path = result_dir + name
         parameters = 'Hidden layer = ' + str(hid) + ' ' + 'Iterations = ' + str(neural_net_iters) + ' ' + '$\epsilon$ = ' + str(round(epsilon,2))
         create_learning_curve_graphic(path, parameters, lambdas, Jtraining, Jval, label = "$\lambda$")
     print()
-    print(fr"Min Diff: {round(min_diff,2)} lamb: {diff_lamb} epsilon: {round(diff_eps,2)}")
-    print(fr"Min Cost {round(min_cost,2)} Max Percent: {10 - round(min_cost,2)} lamb: {min_cost_lamb} epsilon: {min_cost_eps}")
     print(fr"Mejor lambda: {best_lambda}")
     print(fr"Mejor epsilon: {round(best_eps,2)}")
     print(f"Precisión mejor validación: {round(best_percent,2)} best cost: {100 - round(best_percent,2)}")
