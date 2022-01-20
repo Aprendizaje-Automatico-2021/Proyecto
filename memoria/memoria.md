@@ -423,6 +423,8 @@ Aquí podemos observar que el mejor término de regularización no es el mismo p
 
 ![resultados1](https://user-images.githubusercontent.com/47497948/150401103-d496dc51-f72e-4036-8253-4cd281d4d9c3.png)
 
+<div style="page-break-after: always;"></div>
+
 ### Resultados del mejor par de atributos
 #
 
@@ -431,3 +433,5 @@ Aquí podemos observar que el mejor término de regularización no es el mismo p
 Finalmente, obtenemos que el mejor par de atributos para predecir los resultados sería el que está compuesto por **_sit_bend_forw_cm_ y _sit_ups_counts_**, que son básicamente dos tipos de ejercicios físicos que se realizan durante el _BodyPerformance_. Además, lo más curioso a destacar es que la precisión es prácticamente la misma que la obtenida con todos los atributos, por lo que de cara a una mejora en el sistema, sería interesante pensar en cómo utilizar el menor número de atibutos para realizar la predicción.
 
 ![resultados2](https://user-images.githubusercontent.com/47497948/150401478-ffe1bca0-82d8-4325-a3c9-12c0b7b4d2d6.png)
+
+<div style="page-break-after: always;"></div>
