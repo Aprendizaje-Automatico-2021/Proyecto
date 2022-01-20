@@ -1,7 +1,9 @@
 import numpy as np
 import scipy.optimize as opt
+from sklearn import neural_network
 from checkNNGradients import checkNNGradients
 import matplotlib.pyplot as plt
+import os
 
 def sigmoide_fun(Z):
     return 1 / (1 + (np.exp(-Z)))
@@ -113,7 +115,7 @@ def matrix_forward_propagate(X, thetas1, thetas2):
 
     return A1, A2, A3 
 
-def show_total_percent(setType, X, y, optT1, optT2):
+def get_total_percent(setType, X, y, optT1, optT2):
     correct = 0
     h = matrix_forward_propagate(X, optT1, optT2)[2]
     # Indices maximos
@@ -124,24 +126,56 @@ def show_total_percent(setType, X, y, optT1, optT2):
     percent = correct * 100 /np.shape(h)[0]
     return percent
 
+def create_learning_curve_graphic(path, parameters,size, Jtraining, Jval, begin, end, label):
+    plt.plot(np.linspace(begin,end,size,dtype=float), Jtraining, label='Train')
+    plt.plot(np.linspace(begin,end,size,dtype=float), Jval, label='Cross Validation')
+    plt.legend()
+    plt.title(parameters)
+    plt.suptitle(r'Learning curve for neural network')
+    plt.tight_layout(rect=[1,1,1,1])
+    plt.xlabel(label)
+    plt.ylabel('Error') 
+    plt.savefig(path)   
+    #plt.show()
+    plt.close()
+
+def make_neural_network(input_layer, hidden_layer, output_layer, X, y_labels, lamb, iteration, epsilon):
+    # Initialize the thetas random values between -eps and eps
+    weights_size = hidden_layer * (input_layer + 1) + output_layer * (hidden_layer + 1)
+    weights = np.random.uniform(-epsilon, epsilon, weights_size)
+
+    # Calculate the best thetas
+    result = opt.minimize(fun = backprop, x0 = weights,
+                    args = (input_layer, hidden_layer, output_layer, X, y_labels, lamb), 
+                    method='TNC', jac=True, options={'maxiter': iteration})
+    # As the result is an array we remake the thetas matrixes with the corespondent sizes
+    optT1 = np.reshape(result.x[:hidden_layer * (input_layer + 1)], (hidden_layer, (input_layer + 1)))
+    optT2 = np.reshape(result.x[hidden_layer * (input_layer + 1):], (output_layer, (hidden_layer + 1)))
+    return optT1, optT2
 
 def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     """
     Clasificación de los datos mediante Redes Neuronales
     """
+    # We remember the path for the graphics
+    script_dir = os.path.dirname(__file__)
+    result_dir = script_dir[:-4] + '\\memoria\\assets\\neu_net\\'
+
+    # Initialize variables
     num_features = X.shape[1]
     num_labels = 4
 
     input_layer = num_features
-    #hidden_layer = 70
     output_layer = num_labels
 
+    #hidden_layer = 70
     #epsilon = 0.12
     #iteration = 250
-    epsilons = list(np.arange(0.1, 0.3, 0.02))
-    iterations = list(np.arange(250, 251, 50))
-    hidden_layers = list(np.arange(70, 71, 10))
-    #lambdas = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
+    epsilons = [ 0.1, 0.12, 0.14, 0.16,0.18, 0.2] #6
+    #epsilons = [0.12]
+    iterations = list(np.arange(250, 251, 25)) #6
+    hidden_layers = list(np.arange(70, 71, 20))#6
+    #lambdas = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10] #10
     lambdas = [ 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
     y_labels = getLabelMatrixY(y, num_labels)
     
@@ -153,47 +187,136 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     max_percent = -1
     best_optT1 = []
     best_optT2 = []
+
+    #Lambda
     for iteration in iterations:
         for hidden_layer in hidden_layers:
             for epsilon in epsilons:
                 Jval = np.ones(len(lambdas))
                 Jtraining = np.ones(len(lambdas))
                 for i in range(len(lambdas)):
+                    # Training with X
                     lamb = lambdas[i]
-                    # Se entrena con las X
-                    weights_size = hidden_layer * (input_layer + 1) + output_layer * (hidden_layer + 1)
-                    weights = np.random.uniform(-epsilon, epsilon, weights_size)
-                    result = opt.minimize(fun = backprop, x0 = weights,
-                                    args = (input_layer, hidden_layer, output_layer, X, y_labels, lamb), 
-                                    method='TNC', jac=True, options={'maxiter': iteration})
-                    
-                    optT1 = np.reshape(result.x[:hidden_layer * (input_layer + 1)], (hidden_layer, (input_layer + 1)))
-                    optT2 = np.reshape(result.x[hidden_layer * (input_layer + 1):], (num_labels, (hidden_layer + 1)))
+                    optT1, optT2 = make_neural_network(input_layer, hidden_layer, output_layer, X, y_labels, lamb, iteration, epsilon)
                     print(f"Lambda {lamb}   Epsilon: {epsilon} Iterations: {iteration} Hidden layers: {hidden_layer}")
-                    Jtraining[i] = 10 - show_total_percent('training', X, y, optT1, optT2)/10
-                    current_percent = show_total_percent('validation', Xval, yval, optT1, optT2)
+
+                    # We calculate the percentages of succes and using them we calculate the error for the training data set and cross validation data set
+                    Jtraining[i] = 10 - get_total_percent('training', X, y, optT1, optT2)/10
+                    current_percent = get_total_percent('validation', Xval, yval, optT1, optT2)
                     Jval[i] = 10 - current_percent/10
+                    #get_total_percent('test', Xtest, ytest, optT1, optT2)
+                    #get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
+
+                    # We remember the thetas that have the smallest error(biggest percent) on the cross validation data set
                     if current_percent > max_percent:
                         max_percent = current_percent
                         best_optT1 = optT1
                         best_optT2 = optT2
-                    show_total_percent('test', Xtest, ytest, optT1, optT2)
-                    show_total_percent('curent best test', Xtest, ytest, best_optT1, best_optT2)
-                    
                     print("                       ")
-                name = 'lambdas_it' + str(iteration) + '_hidd' + str(hidden_layer) + '_eps' + str(round(epsilon,2)) + 'sizex ' + str(X.shape[0])+'.png'
-                plt.figure()
-                plt.plot(np.linspace(0,11,len(lambdas),dtype=int), Jtraining, label='Train')
-                plt.plot(np.linspace(0,11,len(lambdas),dtype=int), Jval, label='Cross Validation')
-                plt.legend()
-                text = 'Hidden layer = ' + str(hidden_layer) + ' ' + 'Iterations = ' + str(iteration) + ' ' + '$\epsilon$ = ' + str(epsilon)
-                plt.title(text)
-                plt.suptitle(r'Learning curve for neural network')
-                plt.tight_layout(rect=[1,1,1,1])
-                plt.xlabel(r'$\lambda$')
-                plt.ylabel('Error') 
-                plt.savefig(name)   
-                plt.show()
-    show_total_percent('Best final test', Xtest, ytest, best_optT1, best_optT2)
+                # We prepare the parameters for the graphics
+                name = 'Lambda' + 'LearningCurve' + '_it_' + str(iteration) + '_hidd_' + str(hidden_layer) + '_eps_' + str(round(epsilon,2)) + '_sizex_' + str(X.shape[0])+'.png'
+                path = result_dir + 'lambda\\' + name
+                parameters = 'Hidden layer = ' + str(hidden_layer) + ' ' + 'Iterations = ' + str(iteration) + ' ' + '$\epsilon$ = ' + str(round(epsilon,2))
+                size = len(lambdas)
+                create_learning_curve_graphic(path, parameters, size, Jtraining, Jval, min(lambdas), max(lambdas), label = "$\lambda$")
+    get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
+    #Iterations
+    # for hidden_layer in hidden_layers:
+    #     for epsilon in epsilons:
+    #         for lamb in lambdas:
+    #             lg = len(iterations)
+    #             Jval = np.ones(lg)
+    #             Jtraining = np.ones(lg)
+    #             for i in range(lg):
+    #                 # Training with X
+    #                 iteration = iterations[i]
+    #                 optT1, optT2 = make_neural_network(input_layer, hidden_layer, output_layer, X, y_labels, lamb, iteration, epsilon)
+    #                 print(f"Lambda {lamb}   Epsilon: {epsilon} Iterations: {iteration} Hidden layers: {hidden_layer}")
+
+    #                 # We calculate the percentages of succes and using them we calculate the error for the training data set and cross validation data set
+    #                 Jtraining[i] = 10 - get_total_percent('training', X, y, optT1, optT2)/10
+    #                 current_percent = get_total_percent('validation', Xval, yval, optT1, optT2)
+    #                 Jval[i] = 10 - current_percent/10
+    #                 #get_total_percent('test', Xtest, ytest, optT1, optT2)
+    #                 #get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
+
+    #                 # We remember the thetas that have the smallest error(biggest percent) on the cross validation data set
+    #                 if current_percent > max_percent:
+    #                     max_percent = current_percent
+    #                     best_optT1 = optT1
+    #                     best_optT2 = optT2
+    #                 print("                       ")
+    #             # We prepare the parameters for the graphics
+    #             name = 'Iteration' + 'LearningCurve' +  '_hidd_' + str(hidden_layer) + '_eps_' + str(round(epsilon,2)) + '_sizex_' + str(X.shape[0])+ '_lam_' + str(lamb) + '.png'
+    #             path = result_dir + 'hidden\\' + name
+    #             parameters = 'Hidden layer = ' + str(hidden_layer) + ' ' + '$\lambda$ = ' + str(lamb)  + ' ' + '$\epsilon$ = ' + str(round(epsilon,2))
+    #             create_learning_curve_graphic(path, parameters, lg, Jtraining, Jval, min(iterations), max(iterations), label = "Iterations")       
+    # get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
+
+    #For epsilon     
+    for iteration in iterations:
+        for hidden_layer in hidden_layers:
+            for lamb in lambdas:
+                lg = len(epsilons)
+                Jval = np.ones(lg)
+                Jtraining = np.ones(lg)
+                for i in range(lg):
+                    # Training with X
+                    epsilon = epsilons[i]
+                    optT1, optT2 = make_neural_network(input_layer, hidden_layer, output_layer, X, y_labels, lamb, iteration, epsilon)
+                    print(f"Lambda {lamb}   Epsilon: {epsilon} Iterations: {iteration} Hidden layers: {hidden_layer}")
+
+                    # We calculate the percentages of succes and using them we calculate the error for the training data set and cross validation data set
+                    Jtraining[i] = 10 - get_total_percent('training', X, y, optT1, optT2)/10
+                    current_percent = get_total_percent('validation', Xval, yval, optT1, optT2)
+                    Jval[i] = 10 - current_percent/10
+                    #get_total_percent('test', Xtest, ytest, optT1, optT2)
+                    #get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
+
+                    # We remember the thetas that have the smallest error(biggest percent) on the cross validation data set
+                    if current_percent > max_percent:
+                        max_percent = current_percent
+                        best_optT1 = optT1
+                        best_optT2 = optT2
+                    print("                       ")
+                # We prepare the parameters for the graphics
+                name = 'Epsilon' + 'LearningCurve' + '_it_' + str(iteration)  + '_hidd_' + str(hidden_layer) + '_sizex_' + str(X.shape[0]) + '_lam_' + str(lamb)+ '.png'
+                path = result_dir + 'epsilon\\' + name
+                parameters = 'Iterations = ' + str(iteration) + ' '+ 'Hidden layer = ' + str(hidden_layer)+ ' ' + '$\lambda$ = ' + str(lamb)  
+                create_learning_curve_graphic(path, parameters, lg, Jtraining, Jval, min(epsilons), max(epsilons), label = "Epsilons")    
+    # get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
+    # #Hidden layers
+    # for iteration in iterations:
+    #     for epsilon in epsilons:
+    #         for lamb in lambdas:
+    #             lg = len(hidden_layers)
+    #             Jval = np.ones(lg)
+    #             Jtraining = np.ones(lg)
+    #             for i in range(lg):
+    #                 # Training with X
+    #                 hidden_layer = hidden_layers[i]
+    #                 optT1, optT2 = make_neural_network(input_layer, hidden_layer, output_layer, X, y_labels, lamb, iteration, epsilon)
+    #                 print(f"Lambda {lamb}   Epsilon: {epsilon} Iterations: {iteration} Hidden layers: {hidden_layer}")
+
+    #                 # We calculate the percentages of succes and using them we calculate the error for the training data set and cross validation data set
+    #                 Jtraining[i] = 10 - get_total_percent('training', X, y, optT1, optT2)/10
+    #                 current_percent = get_total_percent('validation', Xval, yval, optT1, optT2)
+    #                 Jval[i] = 10 - current_percent/10
+    #                 #get_total_percent('test', Xtest, ytest, optT1, optT2)
+    #                 #get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
+
+    #                 # We remember the thetas that have the smallest error(biggest percent) on the cross validation data set
+    #                 if current_percent > max_percent:
+    #                     max_percent = current_percent
+    #                     best_optT1 = optT1
+    #                     best_optT2 = optT2
+    #                 print("                       ")
+    #             # We prepare the parameters for the graphics
+    #             name = 'Hidden' + 'LearningCurve' + '_it_' + str(iteration)  + '_eps_' + str(round(epsilon,2)) + '_sizex_' + str(X.shape[0]) + '_lam_' + str(lamb)+ '.png'
+    #             path = result_dir + 'hidden\\' + name
+    #             parameters = 'Iterations = ' + str(iteration) + ' ' + '$\lambda$ = ' + str(lamb)  + ' ' + '$\epsilon$ = ' + str(round(epsilon,2))
+    #             create_learning_curve_graphic(path, parameters, lg, Jtraining, Jval, min(hidden_layers), max(hidden_layers), label = "Hidden layers")
+
+    get_total_percent('Best final test', Xtest, ytest, best_optT1, best_optT2)
 
     
