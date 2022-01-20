@@ -158,6 +158,8 @@ En los valores **_X_** guardamos los atributos de cada ejemplo de entrenamiento 
 
 La idea de esta distinción de valores es utilizar los **``datos de entrenamiento``** para entrenar el sistema utilizado. A partir de los valores generados por el sistema, se utilizarán los **``datos de validación``** para verificar que los valores obtenidos son realmente óptimos y, finalmente, con los **``datos de testing``** se pone a prueba el sistema al completo.
 
+Para observar los resultados de nuestros sistemas de clasificación, hemos realizado diversas pruebas, por lo que vamos a mostrar los resultados finales y más relevantes. Además, hemos cogido todos los ejemplos de entrenamiento del dataset porque era lo que mejor resultado nos daba en este caso, es decir, casi 14000 ejemplos de entrenamiento, a pesar de que fueran demasiados.
+
 # Sistema SVM
 En primer lugar, realizamos la clasificación de los datos mediante **SVM** (Support Vector Machine).
 
@@ -208,8 +210,6 @@ Finalmente, no solo utilizamos ``Xtest, ytest`` para realizar la comprobación d
 <div style="page-break-after: always;"></div>
 
 ## SVM Resultados
-Para observar los resultados de nuestro sistema de clasificación, hemos utilizado diversas pruebas, por lo que vamos a mostrar los resultados finales y más relevantes. Además, hemos cogido todos los ejemplos de entrenamiento del dataset porque era lo que mejor resultado nos daba en este caso, es decir, casi 14000 ejemplos de entrenamiento.
-
 **``Valores iniciales. sigma = 0.01, C = 0.01, iteraciones = 20``**
 
 ### Evolución de Sigma
@@ -248,4 +248,190 @@ Finalmente, pusimos a prueba el sistema utilizando los mejores valores, obtenien
 <div style="page-break-after: always;"></div>
 
 # Sistema de Regresión Logística
-Para entrenar los datos mediante ``Regresión Logística`` hacemos uso de **``oneVsAll``**
+Para entrenar los datos mediante ``Regresión Logística`` hacemos uso de **``oneVsAll``**, donde hay que tener en cuenta dos parámetros: **``initReg``** e **``iters``**.
+
+- **``initReg``**`: sirve para inicializar el parámetro de regularización **``reg``**.
+- **``iters``**: es el número de iteraciones que habrá para entrenar el término de regularización, de manera que pueda ofrecer los mejores resultados para **``theta``**.
+
+Para el entrenamiento, al igual que antes, tenemos en cuenta la mejor evaluación en función de los datos de validación **``Xval, yval``** y, finalmente, imprimimos los mejores resultados por consola.
+
+```py
+def oneVsAll(X, y, Xval, yval, initReg=0.01, iters=8, num_labels=4):
+    """
+    Entrenamiento de varios clasificadores por regresión logística
+    """
+    numFeatures = X.shape[1]
+    # Matriz de parámetros theta
+    theta = np.zeros((num_labels, numFeatures))
+    perfmY = getLabelMatrixY(y, num_labels)
+    # Matriz de etiquetas yval
+    ylv = getLabelMatrixY(yval, num_labels)
+
+    # Entrenamiento
+    validation = np.zeros(num_labels)
+    bestScore = np.zeros(num_labels)
+    bestReg = np.zeros(num_labels)
+    bestTheta = np.zeros((num_labels, numFeatures))
+
+    for i in range(num_labels):
+        for j in range(iters):
+            reg = initReg * 3**j
+            # Se entrena con las X
+            result = opt.fmin_tnc(func = coste, x0 = theta[i, :], fprime = gradiente,
+                    args=(X, perfmY[:, i], reg), disp=0)
+            theta[i, :] = result[0]
+
+            # Se evalua con las Xval
+            # Matriz de etiquetas yval
+            validation[i] = evalua(i, theta[i, :], Xval, ylv[:, i])
+            if(validation[i] > bestScore[i]):
+               bestScore[i] = validation[i] 
+               bestReg[i] = reg
+               bestTheta[i, :] = theta[i, :]
+
+    return bestScore, bestReg, bestTheta
+
+def logisticRegresionClassification(X, y, Xval, yval, Xtest, ytest):
+    """
+    Clasificación de los datos mediante Regresión Logística
+    """
+    print("Entrenando sistema de clasificación de bodyPerfomance")
+    bestScore, bestReg, bestTheta = oneVsAll(X, y, Xval, yval)
+    
+    #----------------PRINT-DATA----------------#
+    num_labels = 4
+
+    print("\n------------------------------------------")
+    print("\nMejores resultados del entrenamiento")
+    for i in range(num_labels):
+        str1 = f"Mejor reg {chr(i + 65)}: {bestReg[i]}"
+        str2 = f"Evaluación {chr(i + 65)}: {bestScore[i] * 100}%" 
+        print(str1 + " - " + str2)
+    
+    print(f"Error: {1 - bestScore.mean()}")
+    print("Evaluación media: ", bestScore.mean() * 100)
+    print("\n------------------------------------------")
+
+    print("\nComprobación de parámetros con ytest, Xtest")
+    testResults = np.zeros(num_labels)
+    # Matriz ytest de etiquetas
+    ylt = getLabelMatrixY(ytest, num_labels)
+
+    for i in range(num_labels):
+        testResults[i] = evalua(i, bestTheta[i, :], Xtest, ylt[:, i])
+        print(f"Evaluación {chr(i + 65)}: {testResults[i] * 100}%")
+    print("Evaluación media test: ", testResults.mean() * 100)
+
+    print("\n------------------------------------------")
+    print("Success")
+   
+    #----------------GRAPHICS----------------#
+
+
+    return 0
+```
+
+Por otro lado, hemos realizado el mismo sistema de entrenamiento, pero con el objetivo de averiguar cuál es el mejor par de atributos para predecir el resultado. Para ello, tenemos las siguientes funciones:
+
+```py
+def calculatePair(X, Xval, i, j):
+    """
+    Devuelve el par correspondiente de datos
+    """
+    numFeatures = 2
+    pair = np.zeros((X.shape[0], numFeatures))
+    pair[:, 0] = X[:, i]
+    pair[:, 1] = X[:, j]
+
+    pair_val = np.zeros((Xval.shape[0], numFeatures))
+    pair_val[:, 0] = Xval[:, i]
+    pair_val[:, 1] = Xval[:, j]
+
+    return pair, pair_val
+
+def bestPairClassification(X, y, Xval, yval, Xtest, ytest, dataset):
+    """
+    Clasificación de los datos mediantes Regresión Logística
+    para cada par de datos, escogiendo los 2 mejores atributos
+    que clasifiquen el resultado
+    """
+    print("Entrenando sistema de clasificación de bodyPerfomance")
+    bestScore = np.zeros(1)
+    bestPair = 0
+    bestReg = 0
+    bestTheta = 0
+    f1, f2 = 0, 0
+    
+    initReg = 0.0003
+    n = 1
+    for i in range(X.shape[1]):
+        for j in range(i + 1, X.shape[1]):
+            pair, pair_val = calculatePair(X, Xval, i, j)
+            score, reg, theta = oneVsAll(pair, y, pair_val, yval, initReg, 10)
+            if(score.mean() > bestScore.mean()):
+                bestScore = score
+                bestPair = [pair, pair_val]
+                bestReg = reg
+                bestTheta = theta
+                f1, f2 = i, j
+
+    #----------------PRINT-DATA----------------#
+    num_labels = 4
+    features = dataset.columns[f1] + ", " + dataset.columns[f2]
+    
+    print("\n------------------------------------------")
+    
+    print("\nMejores resultados del entrenamiento")
+    print(f"Mejor par de atributos: {features}")
+    print(f"Mejor reg: {bestReg}")
+    for i in range(num_labels):
+        str1 = f"Mejor reg {chr(i + 65)}: {bestReg[i]}"
+        str2 = f"Evaluación {chr(i + 65)}: {bestScore[i] * 100}%" 
+        print(str1 + " - " + str2)
+    
+    print("Evaluación media: ", bestScore.mean() * 100)
+    print(f"Error: {1 - bestScore.mean()}")
+
+    print("\n------------------------------------------")
+
+    print("\nComprobación de parámetros con ytest, Xtest")
+    testResults = np.zeros(num_labels)
+    # Matriz ytest de etiquetas
+    numFeatures = 2
+    ylt = getLabelMatrixY(ytest, num_labels)
+    pair_test = np.zeros((Xtest.shape[0], numFeatures))
+    pair_test[:, 0] = Xtest[:, f1]
+    pair_test[:, 1] = Xtest[:, f2]
+
+    for i in range(num_labels):
+        testResults[i] = evalua(i, bestTheta[i, :], pair_test, ylt[:, i])
+        print(f"Evaluación {chr(i + 65)}: {testResults[i] * 100}%")
+    print("Evaluación media test: ", testResults.mean() * 100)
+
+    print("\n------------------------------------------")
+
+    return 0
+```
+## Regresión Logística resultados
+
+### Resultados con todos los atributos
+#
+
+**``Valores iniciales. initReg=0.01, iters=8``**
+
+Aquí podemos observar que el mejor término de regularización no es el mismo para predecir los resultados, es deicr, para los grados **``A y B``** obtenemos un valor de **``7.29``** y para **``C y D``** de **``0.01``**.
+
+![resultados1](https://user-images.githubusercontent.com/47497948/150401103-d496dc51-f72e-4036-8253-4cd281d4d9c3.png)
+
+<div style="page-break-after: always;"></div>
+
+### Resultados del mejor par de atributos
+#
+
+**``Valores iniciales. initReg = 0.0003, iters=10``**
+
+Finalmente, obtenemos que el mejor par de atributos para predecir los resultados sería el que está compuesto por **_sit_bend_forw_cm_ y _sit_ups_counts_**, que son básicamente dos tipos de ejercicios físicos que se realizan durante el _BodyPerformance_. Además, lo más curioso a destacar es que la precisión es prácticamente la misma que la obtenida con todos los atributos, por lo que de cara a una mejora en el sistema, sería interesante pensar en cómo utilizar el menor número de atibutos para realizar la predicción.
+
+![resultados2](https://user-images.githubusercontent.com/47497948/150401478-ffe1bca0-82d8-4325-a3c9-12c0b7b4d2d6.png)
+
+<div style="page-break-after: always;"></div>

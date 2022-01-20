@@ -519,6 +519,7 @@ main(system)
 </div></code></pre>
 <p>En los valores <strong><em>X</em></strong> guardamos los atributos de cada ejemplo de entrenamiento y en los valores <strong><em>Y</em></strong>, los resultados.</p>
 <p>La idea de esta distinción de valores es utilizar los <strong><code>datos de entrenamiento</code></strong> para entrenar el sistema utilizado. A partir de los valores generados por el sistema, se utilizarán los <strong><code>datos de validación</code></strong> para verificar que los valores obtenidos son realmente óptimos y, finalmente, con los <strong><code>datos de testing</code></strong> se pone a prueba el sistema al completo.</p>
+<p>Para observar los resultados de nuestros sistemas de clasificación, hemos realizado diversas pruebas, por lo que vamos a mostrar los resultados finales y más relevantes. Además, hemos cogido todos los ejemplos de entrenamiento del dataset porque era lo que mejor resultado nos daba en este caso, es decir, casi 14000 ejemplos de entrenamiento, a pesar de que fueran demasiados.</p>
 <h1 id="sistema-svm">Sistema SVM</h1>
 <p>En primer lugar, realizamos la clasificación de los datos mediante <strong>SVM</strong> (Support Vector Machine).</p>
 <p>Para realizar el entrenamiento con SVM hay que tener en cuenta 2 parámetros: <strong><code>initialValue</code></strong>, <strong><code>iters</code></strong>.</p>
@@ -566,7 +567,6 @@ main(system)
 <p>Finalmente, no solo utilizamos <code>Xtest, ytest</code> para realizar la comprobación de resultados, aunque sus datos serían los más relevantes, sino que comprobamos la puntuación de cada grupo de datos, imprimiendo los cálculos en consola y mostrándolos mediante gráficas.</p>
 <div style="page-break-after: always;"></div>
 <h2 id="svm-resultados">SVM Resultados</h2>
-<p>Para observar los resultados de nuestro sistema de clasificación, hemos utilizado diversas pruebas, por lo que vamos a mostrar los resultados finales y más relevantes. Además, hemos cogido todos los ejemplos de entrenamiento del dataset porque era lo que mejor resultado nos daba en este caso, es decir, casi 14000 ejemplos de entrenamiento.</p>
 <p><strong><code>Valores iniciales. sigma = 0.01, C = 0.01, iteraciones = 20</code></strong></p>
 <h3 id="evoluci%C3%B3n-de-sigma">Evolución de Sigma</h3>
 <h1 id=""></h1>
@@ -590,6 +590,177 @@ main(system)
 <p><img src="https://user-images.githubusercontent.com/47497948/150392097-0abeb671-ae8f-4669-8973-ad4dc32a4045.png" alt="BarsSVM"></p>
 <div style="page-break-after: always;"></div>
 <h1 id="sistema-de-regresi%C3%B3n-log%C3%ADstica">Sistema de Regresión Logística</h1>
+<p>Para entrenar los datos mediante <code>Regresión Logística</code> hacemos uso de <strong><code>oneVsAll</code></strong>, donde hay que tener en cuenta dos parámetros: <strong><code>initReg</code></strong> e <strong><code>iters</code></strong>.</p>
+<ul>
+<li><strong><code>initReg</code></strong>`: sirve para inicializar el parámetro de regularización <strong><code>reg</code></strong>.</li>
+<li><strong><code>iters</code></strong>: es el número de iteraciones que habrá para entrenar el término de regularización, de manera que pueda ofrecer los mejores resultados para <strong><code>theta</code></strong>.</li>
+</ul>
+<p>Para el entrenamiento, al igual que antes, tenemos en cuenta la mejor evaluación en función de los datos de validación <strong><code>Xval, yval</code></strong> y, finalmente, imprimimos los mejores resultados por consola.</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">oneVsAll</span><span class="hljs-params">(X, y, Xval, yval, initReg=<span class="hljs-number">0.01</span>, iters=<span class="hljs-number">8</span>, num_labels=<span class="hljs-number">4</span>)</span>:</span>
+    <span class="hljs-string">"""
+    Entrenamiento de varios clasificadores por regresión logística
+    """</span>
+    numFeatures = X.shape[<span class="hljs-number">1</span>]
+    <span class="hljs-comment"># Matriz de parámetros theta</span>
+    theta = np.zeros((num_labels, numFeatures))
+    perfmY = getLabelMatrixY(y, num_labels)
+    <span class="hljs-comment"># Matriz de etiquetas yval</span>
+    ylv = getLabelMatrixY(yval, num_labels)
+
+    <span class="hljs-comment"># Entrenamiento</span>
+    validation = np.zeros(num_labels)
+    bestScore = np.zeros(num_labels)
+    bestReg = np.zeros(num_labels)
+    bestTheta = np.zeros((num_labels, numFeatures))
+
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(num_labels):
+        <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> range(iters):
+            reg = initReg * <span class="hljs-number">3</span>**j
+            <span class="hljs-comment"># Se entrena con las X</span>
+            result = opt.fmin_tnc(func = coste, x0 = theta[i, :], fprime = gradiente,
+                    args=(X, perfmY[:, i], reg), disp=<span class="hljs-number">0</span>)
+            theta[i, :] = result[<span class="hljs-number">0</span>]
+
+            <span class="hljs-comment"># Se evalua con las Xval</span>
+            <span class="hljs-comment"># Matriz de etiquetas yval</span>
+            validation[i] = evalua(i, theta[i, :], Xval, ylv[:, i])
+            <span class="hljs-keyword">if</span>(validation[i] &gt; bestScore[i]):
+               bestScore[i] = validation[i] 
+               bestReg[i] = reg
+               bestTheta[i, :] = theta[i, :]
+
+    <span class="hljs-keyword">return</span> bestScore, bestReg, bestTheta
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">logisticRegresionClassification</span><span class="hljs-params">(X, y, Xval, yval, Xtest, ytest)</span>:</span>
+    <span class="hljs-string">"""
+    Clasificación de los datos mediante Regresión Logística
+    """</span>
+    print(<span class="hljs-string">"Entrenando sistema de clasificación de bodyPerfomance"</span>)
+    bestScore, bestReg, bestTheta = oneVsAll(X, y, Xval, yval)
+    
+    <span class="hljs-comment">#----------------PRINT-DATA----------------#</span>
+    num_labels = <span class="hljs-number">4</span>
+
+    print(<span class="hljs-string">"\n------------------------------------------"</span>)
+    print(<span class="hljs-string">"\nMejores resultados del entrenamiento"</span>)
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(num_labels):
+        str1 = <span class="hljs-string">f"Mejor reg <span class="hljs-subst">{chr(i + <span class="hljs-number">65</span>)}</span>: <span class="hljs-subst">{bestReg[i]}</span>"</span>
+        str2 = <span class="hljs-string">f"Evaluación <span class="hljs-subst">{chr(i + <span class="hljs-number">65</span>)}</span>: <span class="hljs-subst">{bestScore[i] * <span class="hljs-number">100</span>}</span>%"</span> 
+        print(str1 + <span class="hljs-string">" - "</span> + str2)
+    
+    print(<span class="hljs-string">f"Error: <span class="hljs-subst">{<span class="hljs-number">1</span> - bestScore.mean()}</span>"</span>)
+    print(<span class="hljs-string">"Evaluación media: "</span>, bestScore.mean() * <span class="hljs-number">100</span>)
+    print(<span class="hljs-string">"\n------------------------------------------"</span>)
+
+    print(<span class="hljs-string">"\nComprobación de parámetros con ytest, Xtest"</span>)
+    testResults = np.zeros(num_labels)
+    <span class="hljs-comment"># Matriz ytest de etiquetas</span>
+    ylt = getLabelMatrixY(ytest, num_labels)
+
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(num_labels):
+        testResults[i] = evalua(i, bestTheta[i, :], Xtest, ylt[:, i])
+        print(<span class="hljs-string">f"Evaluación <span class="hljs-subst">{chr(i + <span class="hljs-number">65</span>)}</span>: <span class="hljs-subst">{testResults[i] * <span class="hljs-number">100</span>}</span>%"</span>)
+    print(<span class="hljs-string">"Evaluación media test: "</span>, testResults.mean() * <span class="hljs-number">100</span>)
+
+    print(<span class="hljs-string">"\n------------------------------------------"</span>)
+    print(<span class="hljs-string">"Success"</span>)
+   
+    <span class="hljs-comment">#----------------GRAPHICS----------------#</span>
+
+
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>
+</div></code></pre>
+<p>Por otro lado, hemos realizado el mismo sistema de entrenamiento, pero con el objetivo de averiguar cuál es el mejor par de atributos para predecir el resultado. Para ello, tenemos las siguientes funciones:</p>
+<pre class="hljs"><code><div><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">calculatePair</span><span class="hljs-params">(X, Xval, i, j)</span>:</span>
+    <span class="hljs-string">"""
+    Devuelve el par correspondiente de datos
+    """</span>
+    numFeatures = <span class="hljs-number">2</span>
+    pair = np.zeros((X.shape[<span class="hljs-number">0</span>], numFeatures))
+    pair[:, <span class="hljs-number">0</span>] = X[:, i]
+    pair[:, <span class="hljs-number">1</span>] = X[:, j]
+
+    pair_val = np.zeros((Xval.shape[<span class="hljs-number">0</span>], numFeatures))
+    pair_val[:, <span class="hljs-number">0</span>] = Xval[:, i]
+    pair_val[:, <span class="hljs-number">1</span>] = Xval[:, j]
+
+    <span class="hljs-keyword">return</span> pair, pair_val
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">bestPairClassification</span><span class="hljs-params">(X, y, Xval, yval, Xtest, ytest, dataset)</span>:</span>
+    <span class="hljs-string">"""
+    Clasificación de los datos mediantes Regresión Logística
+    para cada par de datos, escogiendo los 2 mejores atributos
+    que clasifiquen el resultado
+    """</span>
+    print(<span class="hljs-string">"Entrenando sistema de clasificación de bodyPerfomance"</span>)
+    bestScore = np.zeros(<span class="hljs-number">1</span>)
+    bestPair = <span class="hljs-number">0</span>
+    bestReg = <span class="hljs-number">0</span>
+    bestTheta = <span class="hljs-number">0</span>
+    f1, f2 = <span class="hljs-number">0</span>, <span class="hljs-number">0</span>
+    
+    initReg = <span class="hljs-number">0.0003</span>
+    n = <span class="hljs-number">1</span>
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(X.shape[<span class="hljs-number">1</span>]):
+        <span class="hljs-keyword">for</span> j <span class="hljs-keyword">in</span> range(i + <span class="hljs-number">1</span>, X.shape[<span class="hljs-number">1</span>]):
+            pair, pair_val = calculatePair(X, Xval, i, j)
+            score, reg, theta = oneVsAll(pair, y, pair_val, yval, initReg, <span class="hljs-number">10</span>)
+            <span class="hljs-keyword">if</span>(score.mean() &gt; bestScore.mean()):
+                bestScore = score
+                bestPair = [pair, pair_val]
+                bestReg = reg
+                bestTheta = theta
+                f1, f2 = i, j
+
+    <span class="hljs-comment">#----------------PRINT-DATA----------------#</span>
+    num_labels = <span class="hljs-number">4</span>
+    features = dataset.columns[f1] + <span class="hljs-string">", "</span> + dataset.columns[f2]
+    
+    print(<span class="hljs-string">"\n------------------------------------------"</span>)
+    
+    print(<span class="hljs-string">"\nMejores resultados del entrenamiento"</span>)
+    print(<span class="hljs-string">f"Mejor par de atributos: <span class="hljs-subst">{features}</span>"</span>)
+    print(<span class="hljs-string">f"Mejor reg: <span class="hljs-subst">{bestReg}</span>"</span>)
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(num_labels):
+        str1 = <span class="hljs-string">f"Mejor reg <span class="hljs-subst">{chr(i + <span class="hljs-number">65</span>)}</span>: <span class="hljs-subst">{bestReg[i]}</span>"</span>
+        str2 = <span class="hljs-string">f"Evaluación <span class="hljs-subst">{chr(i + <span class="hljs-number">65</span>)}</span>: <span class="hljs-subst">{bestScore[i] * <span class="hljs-number">100</span>}</span>%"</span> 
+        print(str1 + <span class="hljs-string">" - "</span> + str2)
+    
+    print(<span class="hljs-string">"Evaluación media: "</span>, bestScore.mean() * <span class="hljs-number">100</span>)
+    print(<span class="hljs-string">f"Error: <span class="hljs-subst">{<span class="hljs-number">1</span> - bestScore.mean()}</span>"</span>)
+
+    print(<span class="hljs-string">"\n------------------------------------------"</span>)
+
+    print(<span class="hljs-string">"\nComprobación de parámetros con ytest, Xtest"</span>)
+    testResults = np.zeros(num_labels)
+    <span class="hljs-comment"># Matriz ytest de etiquetas</span>
+    numFeatures = <span class="hljs-number">2</span>
+    ylt = getLabelMatrixY(ytest, num_labels)
+    pair_test = np.zeros((Xtest.shape[<span class="hljs-number">0</span>], numFeatures))
+    pair_test[:, <span class="hljs-number">0</span>] = Xtest[:, f1]
+    pair_test[:, <span class="hljs-number">1</span>] = Xtest[:, f2]
+
+    <span class="hljs-keyword">for</span> i <span class="hljs-keyword">in</span> range(num_labels):
+        testResults[i] = evalua(i, bestTheta[i, :], pair_test, ylt[:, i])
+        print(<span class="hljs-string">f"Evaluación <span class="hljs-subst">{chr(i + <span class="hljs-number">65</span>)}</span>: <span class="hljs-subst">{testResults[i] * <span class="hljs-number">100</span>}</span>%"</span>)
+    print(<span class="hljs-string">"Evaluación media test: "</span>, testResults.mean() * <span class="hljs-number">100</span>)
+
+    print(<span class="hljs-string">"\n------------------------------------------"</span>)
+
+    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>
+</div></code></pre>
+<h2 id="regresi%C3%B3n-log%C3%ADstica-resultados">Regresión Logística resultados</h2>
+<h3 id="resultados-con-todos-los-atributos">Resultados con todos los atributos</h3>
+<h1 id=""></h1>
+<p><strong><code>Valores iniciales. initReg=0.01, iters=8</code></strong></p>
+<p>Aquí podemos observar que el mejor término de regularización no es el mismo para predecir los resultados, es deicr, para los grados <strong><code>A y B</code></strong> obtenemos un valor de <strong><code>7.29</code></strong> y para <strong><code>C y D</code></strong> de <strong><code>0.01</code></strong>.</p>
+<p><img src="https://user-images.githubusercontent.com/47497948/150401103-d496dc51-f72e-4036-8253-4cd281d4d9c3.png" alt="resultados1"></p>
+<div style="page-break-after: always;"></div>
+<h3 id="resultados-del-mejor-par-de-atributos">Resultados del mejor par de atributos</h3>
+<h1 id=""></h1>
+<p><strong><code>Valores iniciales. initReg = 0.0003, iters=10</code></strong></p>
+<p>Finalmente, obtenemos que el mejor par de atributos para predecir los resultados sería el que está compuesto por <strong><em>sit_bend_forw_cm</em> y <em>sit_ups_counts</em></strong>, que son básicamente dos tipos de ejercicios físicos que se realizan durante el <em>BodyPerformance</em>. Además, lo más curioso a destacar es que la precisión es prácticamente la misma que la obtenida con todos los atributos, por lo que de cara a una mejora en el sistema, sería interesante pensar en cómo utilizar el menor número de atibutos para realizar la predicción.</p>
+<p><img src="https://user-images.githubusercontent.com/47497948/150401478-ffe1bca0-82d8-4325-a3c9-12c0b7b4d2d6.png" alt="resultados2"></p>
 
 </body>
 </html>
