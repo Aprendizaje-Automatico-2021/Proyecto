@@ -183,10 +183,12 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     best_lambda = 0.01
     
     # Misc
-    max_percent = -1
+    min_cost = np.inf
+    best_percent = -1
     best_optT1 = []
     best_optT2 = []
-    diffMin = np.inf
+    min_diff = np.inf
+    min_special_cost = np.inf
     # Notas: No hace falta repetir tanto el código, solo con esta cadena de for funciona
     for j in range(epsilons):
         epsilon = init_epsilon + 0.02 * j
@@ -202,17 +204,26 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
                 + f"{neural_net_iters} Hidden layers: {hid}")
 
             # We calculate the percentages of succes and using them we calculate the error for the training data set and cross validation data set
-            #Jtraining[i] = 10 - get_total_percent('training', X, y, optT1, optT2)/10
+            Jtraining[i] = 10 - get_total_percent('training', X, y, optT1, optT2)/10
             current_percent = get_total_percent('validation', Xval, yval, optT1, optT2)
-            #Jval[i] = 10 - current_percent/10
-            Jtraining[i] = J(optT1, optT2, X, y_labels)
-            Jval[i] = J(optT1, optT2, Xval, yval_labels)
+            Jval[i] = 10 - current_percent/10
+            # Jtraining[i] = J(optT1, optT2, X, y_labels)
+            # Jval[i] = J(optT1, optT2, Xval, yval_labels)
+
             diff = np.abs(Jtraining[i] - Jval[i])
-            # We remember the thetas that have the smallest error(biggest percent) on the cross validation data set
-            #if  current_percent > max_percent:
-            if  diff < diffMin and current_percent > max_percent:
-                diffMin = diff
-                max_percent = current_percent
+            # We remember the thetas that have the smallest error(biggest percent) on the cross validation data set but also the minimum distance 
+            special_cost = Jval[i]/10 + diff/4
+            if  Jval[i] < min_cost:
+                min_cost = Jval[i]
+                min_cost_lamb = lambdas[i]
+                min_cost_eps = epsilon
+            if diff < min_diff:
+                min_diff = diff
+                diff_lamb = lambdas[i]
+                diff_eps = epsilon
+            if  special_cost < min_special_cost: #Combined distance and cost
+                min_special_cost = special_cost
+                best_percent = current_percent
                 best_lambda = lambdas[i]
                 best_eps = epsilon
                 best_optT1 = optT1
@@ -224,10 +235,12 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
         path = result_dir + name
         parameters = 'Hidden layer = ' + str(hid) + ' ' + 'Iterations = ' + str(neural_net_iters) + ' ' + '$\epsilon$ = ' + str(round(epsilon,2))
         create_learning_curve_graphic(path, parameters, lambdas, Jtraining, Jval, label = "$\lambda$")
-
-    print(fr"Mejor $\lambda$: {best_lambda}")
-    print(fr"Mejor $\epsilon$: {best_eps}")
-    print(f"Precisión mejor validación: {max_percent}")
+    print()
+    print(fr"Min Diff: {round(min_diff,2)} lamb: {diff_lamb} epsilon: {round(diff_eps,2)}")
+    print(fr"Min Cost {round(min_cost,2)} Max Percent: {100 - round(min_cost,2)} lamb: {min_cost_lamb} epsilon: {min_cost_eps}")
+    print(fr"Mejor lambda: {best_lambda}")
+    print(fr"Mejor epsilon: {round(best_eps,2)}")
+    print(f"Precisión mejor validación: {round(best_percent,2)} best cost: {10 - round(best_percent,2)}")
     get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
 
     return 0
