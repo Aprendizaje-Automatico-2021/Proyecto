@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.optimize as opt
-
+from checkNNGradients import checkNNGradients
+import matplotlib.pyplot as plt
 
 def sigmoide_fun(Z):
     return 1 / (1 + (np.exp(-Z)))
@@ -112,14 +113,17 @@ def matrix_forward_propagate(X, thetas1, thetas2):
 
     return A1, A2, A3 
 
-def show_total_percent(setType, X, y, optT1, optT2, lamb):
+def show_total_percent(setType, X, y, optT1, optT2):
     correct = 0
     h = matrix_forward_propagate(X, optT1, optT2)[2]
     # Indices maximos
     max = np.argmax(h, axis = 1)
     max[max == 0] = 4
     correct = np.sum(max == y.ravel())
-    print(f"Lambda {setType}: {lamb}   Porcentaje de acierto: {correct * 100 /np.shape(h)[0]}%")
+    print(f"{setType}   Porcentaje de acierto: {correct * 100 /np.shape(h)[0]}%")
+    percent = correct * 100 /np.shape(h)[0]
+    return percent
+
 
 def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     """
@@ -129,29 +133,67 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     num_labels = 4
 
     input_layer = num_features
-    hidden_layer = 70
+    #hidden_layer = 70
     output_layer = num_labels
 
-    epsilon = 0.12
-    iterations = 250
-    lambdas = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
-    weights_size = hidden_layer * (input_layer + 1) + output_layer * (hidden_layer + 1)
-    for lamb in lambdas:
-        # Se entrena con las X
-        weights = np.random.uniform(-epsilon, epsilon, weights_size)
-        y_labels = getLabelMatrixY(y, num_labels)
-        result = opt.minimize(fun = backprop, x0 = weights,
-                        args = (input_layer, hidden_layer, output_layer, X, y_labels, lamb), 
-                        method='TNC', jac=True, options={'maxiter': iterations})
-        
-        optT1 = np.reshape(result.x[:hidden_layer * (input_layer + 1)], (hidden_layer, (input_layer + 1)))
-        optT2 = np.reshape(result.x[hidden_layer * (input_layer + 1):], (num_labels, (hidden_layer + 1)))
+    #epsilon = 0.12
+    #iteration = 250
+    epsilons = list(np.arange(0.1, 0.3, 0.02))
+    iterations = list(np.arange(250, 251, 50))
+    hidden_layers = list(np.arange(70, 71, 10))
+    #lambdas = [0, 0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
+    lambdas = [ 0.01, 0.03, 0.1, 0.3, 1, 3, 10]
+    y_labels = getLabelMatrixY(y, num_labels)
+    
+    # Check if the gradient is good
+    # for lamb in lambdas:
+    #     checking = checkNNGradients(backprop, lamb)
+    #     print("Comprobación de checkeo...", lamb, '  ', checking.sum() < 10e-9)
 
-        show_total_percent('training', X, y, optT1, optT2, lamb)
-        show_total_percent('validation', Xval, yval, optT1, optT2, lamb)
-        show_total_percent('training', Xtest, ytest, optT1, optT2, lamb)
-        #show_each_percent()
-        print("                       ")
-    return 0
+    max_percent = -1
+    best_optT1 = []
+    best_optT2 = []
+    for iteration in iterations:
+        for hidden_layer in hidden_layers:
+            for epsilon in epsilons:
+                Jval = np.ones(len(lambdas))
+                Jtraining = np.ones(len(lambdas))
+                for i in range(len(lambdas)):
+                    lamb = lambdas[i]
+                    # Se entrena con las X
+                    weights_size = hidden_layer * (input_layer + 1) + output_layer * (hidden_layer + 1)
+                    weights = np.random.uniform(-epsilon, epsilon, weights_size)
+                    result = opt.minimize(fun = backprop, x0 = weights,
+                                    args = (input_layer, hidden_layer, output_layer, X, y_labels, lamb), 
+                                    method='TNC', jac=True, options={'maxiter': iteration})
+                    
+                    optT1 = np.reshape(result.x[:hidden_layer * (input_layer + 1)], (hidden_layer, (input_layer + 1)))
+                    optT2 = np.reshape(result.x[hidden_layer * (input_layer + 1):], (num_labels, (hidden_layer + 1)))
+                    print(f"Lambda {lamb}   Epsilon: {epsilon} Iterations: {iteration} Hidden layers: {hidden_layer}")
+                    Jtraining[i] = 10 - show_total_percent('training', X, y, optT1, optT2)/10
+                    current_percent = show_total_percent('validation', Xval, yval, optT1, optT2)
+                    Jval[i] = 10 - current_percent/10
+                    if current_percent > max_percent:
+                        max_percent = current_percent
+                        best_optT1 = optT1
+                        best_optT2 = optT2
+                    show_total_percent('test', Xtest, ytest, optT1, optT2)
+                    show_total_percent('curent best test', Xtest, ytest, best_optT1, best_optT2)
+                    
+                    print("                       ")
+                name = 'lambdas_it' + str(iteration) + '_hidd' + str(hidden_layer) + '_eps' + str(round(epsilon,2)) + 'sizex ' + str(X.shape[0])+'.png'
+                plt.figure()
+                plt.plot(np.linspace(0,11,len(lambdas),dtype=int), Jtraining, label='Train')
+                plt.plot(np.linspace(0,11,len(lambdas),dtype=int), Jval, label='Cross Validation')
+                plt.legend()
+                text = 'Hidden layer = ' + str(hidden_layer) + ' ' + 'Iterations = ' + str(iteration) + ' ' + '$\epsilon$ = ' + str(epsilon)
+                plt.title(text)
+                plt.suptitle(r'Learning curve for neural network')
+                plt.tight_layout(rect=[1,1,1,1])
+                plt.xlabel(r'$\lambda$')
+                plt.ylabel('Error') 
+                plt.savefig(name)   
+                plt.show()
+    show_total_percent('Best final test', Xtest, ytest, best_optT1, best_optT2)
 
     

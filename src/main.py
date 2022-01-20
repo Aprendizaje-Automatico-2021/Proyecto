@@ -25,5 +25,5 @@ def main(system=0):
         red_neu(X, y, Xval, yval, Xtest, ytest)
     return 0
     
-system = 0
+system = 2
 main(system) 
