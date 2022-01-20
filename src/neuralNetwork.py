@@ -172,8 +172,8 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
     best_eps = 0.1
 
     # NeuralNet
-    neural_net_iters = 100 # 100
-    hid = 25    # 25
+    neural_net_iters = 200 # 100
+    hid = 75    # 25
     input_layer = num_features
     output_layer = num_labels
 
@@ -237,10 +237,10 @@ def neuralNetworkClassification(X, y, Xval, yval, Xtest, ytest):
         create_learning_curve_graphic(path, parameters, lambdas, Jtraining, Jval, label = "$\lambda$")
     print()
     print(fr"Min Diff: {round(min_diff,2)} lamb: {diff_lamb} epsilon: {round(diff_eps,2)}")
-    print(fr"Min Cost {round(min_cost,2)} Max Percent: {100 - round(min_cost,2)} lamb: {min_cost_lamb} epsilon: {min_cost_eps}")
+    print(fr"Min Cost {round(min_cost,2)} Max Percent: {10 - round(min_cost,2)} lamb: {min_cost_lamb} epsilon: {min_cost_eps}")
     print(fr"Mejor lambda: {best_lambda}")
     print(fr"Mejor epsilon: {round(best_eps,2)}")
-    print(f"Precisión mejor validación: {round(best_percent,2)} best cost: {10 - round(best_percent,2)}")
+    print(f"Precisión mejor validación: {round(best_percent,2)} best cost: {100 - round(best_percent,2)}")
     get_total_percent('Current best test', Xtest, ytest, best_optT1, best_optT2)
 
     return 0
